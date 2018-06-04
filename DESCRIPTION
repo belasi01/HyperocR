@@ -1,0 +1,24 @@
+Package: HyperocR
+Type: Package
+Title: Hyperspectral OCR data processing
+Version: 0.1-4
+Date: 2018-06-03
+Author: Simon Belanger
+Maintainer: Simon Belanger, <simon_belanger@uqar.ca>
+Description: R routines to read and process Hyperspectral data from Satlantic
+    radiometers. The main purpose is to compute the hyperspectral
+    remote sensing reflectance from the three radiometers of the HyperSAS.
+License: No
+LazyData: TRUE
+Depends:
+    oce,
+    stringr,
+    maps,
+    ggplot2,
+    brew,
+    knitr,
+    xtable,
+    reshape2,
+    grid,
+    Riops
+RoxygenNote: 6.0.1

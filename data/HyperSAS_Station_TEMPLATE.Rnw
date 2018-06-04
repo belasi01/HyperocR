@@ -1,0 +1,239 @@
+\documentclass{article}
+\usepackage[greek,francais]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{color}
+\usepackage{pdfcolmk}
+\usepackage[T1]{fontenc}
+\usepackage{authblk}
+\usepackage{float}    % for fig.pos='H'
+\usepackage{rotfloat} % for sidewaysfigure
+\usepackage[comma,authoryear]{natbib}
+\usepackage{multirow}
+\usepackage[nottoc,notlof,notlot]{tocbibind}
+\begin{document}
+
+\author[1]{}
+\title{Station <%=Station%>}
+\date{<%=Date%>}
+\maketitle
+
+<<options, echo=FALSE, warning=FALSE, results='hide', cache.lazy=FALSE, message=FALSE>>=
+options(prompt = " ", continue = " ", width = 85)
+opts_chunk$set(concordance=TRUE, fig.pos='H')
+library('maps')
+@
+
+<<LoadData, echo=FALSE>>=
+load(file=paste("<%=dirdat%>","/RRS.RData",sep=""))
+load(file=paste("<%=dirdat%>","/SAS.raw.RData",sep=""))
+@
+
+<<StationMap, fig.cap="Station position", echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE>>=
+#LabSea = get_map(location = c(lon = -52, lat = 55), zoom = 5,  scale = "auto", maptype="satellite")
+nb.rrs = length(SAS)
+lat=rep(NA,nb.rrs)
+lon=rep(NA,nb.rrs)
+for (i in 1:nb.rrs) {
+  lat[i] = SAS[[i]]$dd$latitude
+  lon[i] = SAS[[i]]$dd$longitude
+}
+
+lon = mean(lon, na.rm=T)
+lat = mean(lat, na.rm=T)
+
+ map(fill=T, xlim=c(lon-5,lon+5), ylim=c(lat-4,lat+4))
+ grid(nx=10, col=1)
+ points(lon,lat,col=2,cex=2, pch=20)
+box()
+axis(1)
+axis(2)
+@
+
+\section{Geometry and weather conditions}
+
+<<Table, echo=FALSE, results = "asis">>=
+# Subset thelist to produce a table
+
+DF = matrix(NA,nrow=nb.rrs, ncol=10)
+DateTime = rep(NA, nb.rrs)
+
+for (i in 1:nb.rrs) {
+  DF[i,1] = RRS[[i]]$ThetaS
+  DF[i,3] = RRS[[i]]$ThetaV
+  DF[i,2] = RRS[[i]]$PhiS
+  DF[i,4] = RRS[[i]]$Dphi.log
+  DF[i,5] = RRS[[i]]$Dphi.comp
+  DF[i,6] = RRS[[i]]$Windspeed
+  DF[i,7] = RRS[[i]]$CLEARSKY
+  DF[i,8] = RRS[[i]]$rho.sky
+  DF[i,9] = RRS[[i]]$offset
+  DF[i,10] = RRS[[i]]$Good
+  DateTime[i] = RRS[[i]]$DateTime
+}
+
+Table <- as.data.frame(DF)
+names(Table) <- expression("thetaS","phiS","thetaV","Dphi.log" ,"Dphi.comp","Wind speed ", "ClearSky","rho_sky","NIR offset", "Good")
+row.names(Table) <- as.POSIXct(DateTime, origin = "1970-01-01")
+
+print(xtable(Table, caption="Sun-Viewing geometry, wind speed, sky conditions, fresnel reflectance for sky radiance and Rrs(NIR) offset",  label = "tab:", digits=c(0,0,0,0,0,0,1,0,4,4,0)),
+    caption.placement="top",  scalebox='0.60')
+
+
+@
+
+
+\section{Above-water Rrs measurements}
+
+
+<<RrsFromSAS, fig.cap="Remote sensing reflectance from HyperSAS", echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE, fig.height=5>>=
+
+# Plot only the good RRS
+nb.rrs.good = length(Table$Good[Table$Good == 1])
+ix.rrs.good = which(Table$Good ==1)
+
+rrs.rep = matrix(ncol=nb.rrs.good, nrow=length(RRS[[1]]$Rrs.wl))
+dte = as.POSIXct(rep(NA, nb.rrs.good))
+
+for (i in 1:nb.rrs.good){
+  rrs.rep[,i] = RRS[[ix.rrs.good[i]]]$Rrs
+  dte[i] = SAS[[ix.rrs.good[i]]]$Lt.Time[(RRS[[ix.rrs.good[i]]]$ix.Lt.good[1])]
+}
+
+Df = as.data.frame(cbind(RRS[[1]]$Rrs.wl, rrs.rep))
+names(Df) <- c("Wavelength",  as.character(dte))
+Dfm <- melt(Df, id.vars = "Wavelength")
+names(Dfm) <- c("Wavelength", "Time", "value")
+p1 <- ggplot(data=Dfm, aes(x=Wavelength, y=value, colour=Time)) + geom_line(size=1.3)
+p1 <- p1 + scale_x_continuous(limits = c(380, 780))
+p1 <- p1 + scale_y_continuous()
+p1 <- p1 + labs(x="Wavelength (nm)", y=expression(paste("R"["rs"]," (sr"^"-1",")")))
+
+# Add the mean spectra
+Df = as.data.frame(cbind(RRS$Rrs.wl, RRS$Rrs.mean, RRS$Rrs.sd))
+names(Df) <- c("Wavelength", "Rrs", "sd")
+p1 <- p1 + geom_line(data=Df, aes(x=Wavelength, y=Rrs), size=1.7, colour="black")
+
+# add the interval of confidence
+predframe <- with(Df,data.frame(Wavelength=Df$Wavelength,
+                              Rrs=Df$Rrs,
+                              lwr=Rrs-Df$sd,
+                              upr=Rrs+Df$sd))
+p1 <- p1 + geom_ribbon(data=predframe,
+                       aes(Wavelength, Rrs,ymin=lwr,ymax=upr),
+                       alpha=0.5,
+                       inherit.aes = F)
+p1 <- p1 + labs(title=paste("Forel-Ule Color Index:", RRS$FU))
+print(p1)
+
+@
+
+
+<<SASTiltandEd,  fig.cap="Tilt and downwelling irradiance during measurements.", echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE,fig.height=10>>=
+
+pushViewport(viewport(layout = grid.layout(nb.rrs, 2)))
+
+for (i in 1:nb.rrs) {
+   df = as.data.frame(cbind(SAS[[i]] $Anc.Time,RRS[[i]]$tilt))
+    names(df) <- c("t", "tilt")
+    p1 <- ggplot(data=df, aes(x=t, y=tilt)) + geom_point()
+    p1 <- p1 + geom_line(data=as.data.frame(cbind(SAS[[i]] $Lt.Time,RRS[[i]]$tilt.Lt)),
+                         aes(x=V1, y=V2), colour="blue")
+    p1 <- p1 + geom_line(data=as.data.frame(cbind(SAS[[i]]$Ed.Time,RRS[[i]]$tilt.Ed)),
+                         aes(x=V1, y=V2), colour="red")
+    p1 <- p1 + geom_line(data=as.data.frame(cbind(SAS[[i]]$Lt.Time,RRS[[i]]$tilt.Li)),
+                         aes(x=V1, y=V2), colour="green")
+    p1 <- p1 + labs(x="Time", y="Sensor tilt")
+
+    ixwl=round(seq(1,length(SAS[[i]]$Ed.wl), length.out = 10))
+    Df = as.data.frame(cbind(SAS[[i]]$Ed.Time, SAS[[i]]$Ed[,ixwl]))
+    names(Df) <- c("Time", as.character(SAS[[i]]$Ed.wl[ixwl]))
+    Dfm <- melt(Df, id.vars = "Time")
+    names(Dfm) <- c("Time", "Wavelength", "value")
+    p2 <- ggplot(data= Dfm, aes(x=Time, y=value, colour=Wavelength)) + geom_point()
+    p2 <- p2 + labs(x="Time", y=expression(paste("E"["d"]," (",mu,"W.cm"^"-2","nm"^"-1",")")))
+    p2 <- p2 + guides(colour=F)
+
+    print(p1, vp = viewport(layout.pos.row = i, layout.pos.col = 1))
+    print(p2, vp = viewport(layout.pos.row = i, layout.pos.col = 2))
+
+}
+@
+
+<<SASEdLiLt, fig.cap="Spectral variability during measurements",   echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE,fig.height=10>>=
+
+ pushViewport(viewport(layout = grid.layout(nb.rrs, 3)))
+
+for (i in 1:nb.rrs) {
+
+    Df = as.data.frame(cbind(SAS[[i]]$Ed.wl, t(SAS[[i]]$Ed)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Ed.Time, format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p1 <- ggplot(data= Dfm, aes(x=Wavelength, y=value, group=t)) + geom_line(color="grey")
+
+    Df = as.data.frame(cbind(SAS[[i]]$Ed.wl, t(RRS[[i]]$Ed)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time[RRS[[i]]$ix.Lt.good], format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p1 <- p1 + geom_line(data= Dfm, aes(x=Wavelength, y=value, colour=t))
+   # p1 <- p1 + geom_line(data=data.frame(Wavelength=SAS[[i]]$Ed.wl, Ed=RRS[[i]]$Ed.mean), aes(x=Wavelength, y=Ed),color="black")
+    p1 <- p1 + labs(y=expression(paste("E"["d"],"(",mu,"W.cm"^"-2","nm"^"-1",")")))
+    p1 <- p1 + guides(colour=F)
+
+   Df = as.data.frame(cbind(SAS[[i]]$Li.wl, t(SAS[[i]]$Li)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Li.Time, format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p2 <- ggplot(data= Dfm, aes(x=Wavelength, y=value, group=t)) + geom_line(color="grey")
+
+    Df = as.data.frame(cbind(SAS[[i]]$Li.wl, t(RRS[[i]]$Li)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time[RRS[[i]]$ix.Lt.good], format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p2 <- p2 + geom_line(data= Dfm, aes(x=Wavelength, y=value, colour=t))
+  #  p2 <- p2 + geom_line(data=data.frame(Wavelength=SAS[[i]]$Li.wl, Li=RRS[[i]]$Li.mean), aes(y=Li),color="black")
+    p2 <- p2 + labs(y=expression(paste("L"["sky"],"(",mu,"W.cm"^"-2","nm"^"-1","sr"^"-1",")")))
+    p2 <- p2 + guides(colour=F)
+
+    Df = as.data.frame(cbind(SAS[[i]]$Lt.wl, t(SAS[[i]]$Lt)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time, format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p3 <- ggplot(data= Dfm, aes(x=Wavelength, y=value, group=t)) + geom_line(color="grey")
+
+    Df = as.data.frame(cbind(SAS[[i]]$Lt.wl, t(RRS[[i]]$Lt)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time[RRS[[i]]$ix.Lt.good], format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p3 <- p3 + geom_line(data= Dfm, aes(x=Wavelength, y=value, colour=t))
+    #p3 <- p3 + geom_line(data=data.frame(Wavelength=SAS[[i]]$Lt.wl, Lt=RRS[[i]]$Lt.mean),aes(y=Lt),color="black")
+    p3 <- p3 + labs(y=expression(paste("L"["sea"],"(",mu,"W.cm"^"-2","nm"^"-1","sr"^"-1",")")))
+    p3 <- p3 + guides(colour=F)
+
+
+    print(p1, vp = viewport(layout.pos.row = i, layout.pos.col = 1))
+    print(p2, vp = viewport(layout.pos.row = i, layout.pos.col = 2))
+    print(p3, vp = viewport(layout.pos.row = i, layout.pos.col = 3))
+}
+
+@
+
+<<Darks, fig.cap="Spectral dark measurements",   echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE,fig.height=5>>=
+
+Df = as.data.frame(cbind(SAS[[1]]$Ed.wl, SAS[[1]]$Ed.Dark.mean,SAS[[1]]$Li.Dark.mean,SAS[[1]]$Lt.Dark.mean))
+names(Df) <- c("Wavelength", "Ed", "Lsky", "Lsurf")
+Dfm <- melt(Df, id.vars = "Wavelength")
+names(Dfm) <- c("Wavelength", "Time", "value")
+p1 <- ggplot(data=Dfm, aes(x=Wavelength, y=value, colour=Time)) + geom_line(size=1.2)
+p1 <- p1 + scale_x_continuous()
+p1 <- p1 + scale_y_continuous()
+p1 <- p1 + labs(x="Wavelength (nm)", y=expression(paste("E"["d"],", L"["sky"],", L"["surf"],"(",mu,"W.cm"^"-2","nm"^"-1","sr"^"-1",")")))
+p1 <- p1 + labs(title=RRS[[1]]$DARK.file)
+print(p1)
+
+@
+
+
+
+
+\end{document}

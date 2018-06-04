@@ -1,0 +1,2 @@
+Year  Day Time  Dphi  ThetaV  Windspeed Wind.units  quantile.prob tilt.max  NIR.CORRECTION good
+YYYY  DOY HHMMSS  DEG DEG WS  WS_UNITS 0.5 3 NULL 1

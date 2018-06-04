@@ -1,0 +1,239 @@
+\documentclass{article}
+\usepackage[greek,francais]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{color}
+\usepackage{pdfcolmk}
+\usepackage[T1]{fontenc}
+\usepackage{authblk}
+\usepackage{float}    % for fig.pos='H'
+\usepackage{rotfloat} % for sidewaysfigure
+\usepackage[comma,authoryear]{natbib}
+\usepackage{multirow}
+\usepackage[nottoc,notlof,notlot]{tocbibind}
+\begin{document}
+
+\author[1]{}
+\title{Transit <%=Transit%>}
+\date{<%=Date%>}
+\maketitle
+
+<<options, echo=FALSE, warning=FALSE, results='hide', cache.lazy=FALSE, message=FALSE>>=
+options(prompt = " ", continue = " ", width = 85)
+opts_chunk$set(concordance=TRUE, fig.pos='H')
+library('maps')
+@
+
+<<LoadData, echo=FALSE>>=
+load(file=paste("<%=dirdat%>","/RRS.RData",sep=""))
+load(file=paste("<%=dirdat%>","/SAS.raw.RData",sep=""))
+@
+
+<<StationMap, fig.cap="Transit position", echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE>>=
+#LabSea = get_map(location = c(lon = -52, lat = 55), zoom = 5,  scale = "auto", maptype="satellite")
+
+min.lon= min(RRS$lat.lon[,2], na.rm=T)
+min.lat= min(RRS$lat.lon[,1], na.rm=T)
+max.lon= max(RRS$lat.lon[,2], na.rm=T)
+max.lat= max(RRS$lat.lon[,1], na.rm=T)
+
+nb.rec = length(SAS)
+col.rec= rainbow.modified(nb.rec)
+map(fill=T, xlim=c(min.lon-2,max.lon+2), ylim=c(min.lat-1,max.lat+1))
+grid(nx=10, col=1)
+points(RRS$lat.lon[,2],RRS$lat.lon[,1],col=col.rec,cex=1.5, pch=19)
+text(RRS$lat.lon[1,2],RRS$lat.lon[1,1], format(as.POSIXct(RRS$DateTime[1],origin="1970-01-01"), "%H:%M"))
+text(RRS$lat.lon[nb.rec,2],RRS$lat.lon[nb.rec,1], format(as.POSIXct(RRS$DateTime[nb.rec],origin="1970-01-01"), "%H:%M"))
+
+
+text(RRS$lat.lon[nb.rec/2,2],RRS$lat.lon[nb.rec/2,1], format(as.POSIXct(RRS$DateTime[nb.rec/2],origin="1970-01-01"), "%H:%M"))
+
+box()
+axis(1)
+axis(2)
+@
+
+\section{Geometry and weather conditions}
+
+<<Table, echo=FALSE, results = "asis", warning=FALSE>>=
+# Subset thelist to produce a table
+
+Table = as.data.frame(RRS$Anc)
+names(Table) <- expression("thetaS","phiS","thetaV","Dphi.log","Dphi.comp", "Wind speed ", "ClearSky","rho_sky","NIR offset")
+HM = format(as.POSIXct(RRS$DateTime,origin="1970-01-01"), "%H:%M")
+
+#row.names(Table) <- HM
+Table$Time <- HM
+
+Table <- Table[,c(11,seq(1,9))]
+
+
+if (nb.rec > 60) {
+  print(xtable(Table[1:60,], caption="Sun-Viewing geometry, wind speed, sky conditions, fresnel reflectance for sky radiance and Rrs(NIR) offset",  label = "tab:", digits=c(0,0,0,0,0,0,0,1,0,4,5)),caption.placement="top", scalebox='0.65',include.rownames = FALSE)
+  print(xtable(Table[61:nb.rec,], caption="Sun-Viewing geometry, wind speed, sky conditions, fresnel reflectance for sky radiance and Rrs(NIR) offset (continue)",  label = "tab:", digits=c(0,0,0,0,0,0,0,1,0,4,5)),
+      caption.placement="top", scalebox='0.65',include.rownames = FALSE)
+} else {
+  print(xtable(Table, caption="Sun-Viewing geometry, wind speed, sky conditions, fresnel reflectance for sky radiance and Rrs(NIR) offset",  label = "tab:", digits=c(0,0,0,0,0,0,0,0,1,0,4,5)),
+      caption.placement="top", scalebox='0.65',include.rownames = FALSE)
+}
+
+
+
+
+
+
+@
+
+
+\section{Above-water Rrs measurements}
+
+
+<<RrsFromSAS, fig.cap="Remote sensing reflectance from HyperSAS along transit", echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE, fig.height=5>>=
+
+max.rrs = max(RRS$rrs, na.rm=T)
+
+plot(RRS[[1]]$Rrs.wl, RRS$rrs[1,], ylim=c(0,max.rrs), ylab=expression(paste("R"["rs"]," (sr"^"-1",")")), xlab="Wavelength", type='l', lwd=1)
+grid(nx=9, 6, col="darkgrey", lty=1, lwd=1 )
+for (i in 1:nb.rec) lines(RRS[[i]]$Rrs.wl, RRS$rrs[i,], col=col.rec[i])
+
+@
+
+<<RrsAlongTransit, fig.cap="Remote sensing reflectance ratio from HyperSAS along transit", echo=FALSE, fig.show='asis', warning=FALSE,message=FALSE, fig.height=7>>=
+max.ratio = max(cbind(RRS$rrs[,13]/RRS$rrs[,37],RRS$rrs[,23]/RRS$rrs[,37],RRS$rrs[,23]/RRS$rrs[,37]), na.rm=T)
+
+par(mfrow=c(2,1))
+par(mar=c(0,5,4,1))
+t = as.POSIXct(RRS$DateTime, origin = "1970-01-01")
+plot(t, RRS$rrs[,13]/RRS$rrs[,37], type="l", col="darkblue", lwd=1.2,
+     ylim=c(0.,max.ratio), ylab="Blue-to-Green Rrs ratio", xaxt = "n", xlab="")
+points(t, RRS$rrs[,13]/RRS$rrs[,37], col="darkblue", pch=19, cex=0.5)
+
+lines(t, RRS$rrs[,23]/RRS$rrs[,37],col="cyan", lwd=1.2)
+points(t, RRS$rrs[,23]/RRS$rrs[,37],col="cyan", pch=19, cex=0.5)
+
+lines(t, RRS$rrs[,27]/RRS$rrs[,37], col="darkgreen", lwd=1.2)
+points(t, RRS$rrs[,27]/RRS$rrs[,37], col="darkgreen", pch=19, cex=0.5)
+grid(col="darkgrey", lwd=1)
+
+legend("bottomleft", c("443/560", "490/560", "510/560"), lwd=c(1.2,1.2,1.2), col=c("darkblue", "cyan", "darkgreen"), pch=c(19,19,19), cex=0.8)
+
+par(mar=c(4,5,0,1))
+plot(t, Table$thetaS, xlab="Time", ylab="Sun Zenith Angle", pch=19, cex=0.7)
+points(t[Table$thetaS>70], Table$thetaS[Table$thetaS>70], pch=19,col=2,cex=0.6)
+grid(col="darkgrey", lwd=1)
+@
+
+
+<<ProducePNGFigures,warning=FALSE,message=FALSE, error=FALSE, echo=FALSE>>=
+
+if (<%=DIAGNOSTIC.PLOTS%>) {
+
+for (i in 1:nb.rec) {
+
+  png(file=paste("<%=dirdat%>","/figure/",SAS[[i]]$Anc$DATETAG[1],'-',SAS[[i]]$Anc$TIME[1], "Tilt.Ed.png", sep=""), units = "in", height = 5, width = 7, res=300)
+  pushViewport(viewport(layout = grid.layout(1, 2)))
+   df = as.data.frame(cbind(SAS[[i]]$Anc.Time,RRS[[i]]$tilt))
+   df[,1] <- as.POSIXct(df[,1], origin = "1970-01-01")
+    names(df) <- c("time", "tilt")
+
+    p1 <- ggplot(data=df, aes(x=time, y=tilt)) + geom_point()
+    df = as.data.frame(cbind(SAS[[i]]$Lt.Time,RRS[[i]]$tilt.Lt))
+    df[,1] <- as.POSIXct(df[,1],origin = "1970-01-01")
+    p1 <- p1 + geom_line(data=df,
+                         aes(x=V1, y=V2), colour="blue")
+
+    df=as.data.frame(cbind(SAS[[i]]$Ed.Time,RRS[[i]]$tilt.Ed))
+    df[,1] <- as.POSIXct(df[,1],origin = "1970-01-01")
+    p1 <- p1 + geom_line(data=df,
+                         aes(x=V1, y=V2), colour="red")
+
+    df = as.data.frame(cbind(SAS[[i]]$Li.Time,RRS[[i]]$tilt.Li))
+    df[,1] <- as.POSIXct(df[,1],origin = "1970-01-01")
+    p1 <- p1 + geom_line(data=df,
+                         aes(x=V1, y=V2), colour="green")
+    p1 <- p1 + labs(x="Time", y="Sensor tilt")
+    p1 <- p1 + labs(title=as.POSIXct(RRS$DateTime[i],origin= "1970-01-01"))
+
+
+    # plot the downwelling irradiance
+
+    ixwl=round(seq(1,length(SAS[[i]]$Ed.wl), length.out = 10))
+    Df = as.data.frame(cbind(SAS[[i]]$Ed.Time, SAS[[i]]$Ed[,ixwl]))
+    Df[,1] <- as.POSIXct(Df[,1],origin = "1970-01-01")
+
+    names(Df) <- c("Time", as.character(SAS[[i]]$Ed.wl[ixwl]))
+    Dfm <- melt(Df, id.vars = "Time")
+    names(Dfm) <- c("Time", "Wavelength", "value")
+    p2 <- ggplot(data= Dfm, aes(x=Time, y=value, colour=Wavelength)) + geom_point()
+    p2 <- p2 + labs(x="Time", y=expression(paste("E"["d"]," (",mu,"W.cm"^"-2","nm"^"-1",")")))
+    p2 <- p2 + guides(colour=F)
+
+    print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+    print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+    dev.off()
+
+    png(file=paste("<%=dirdat%>","/figure/",SAS[[i]]$Anc$DATETAG[1],'-',SAS[[i]]$Anc$TIME[1], "_Spectral.Ed.Li.Lt.png", sep=""), units = "in", height = 5, width = 7, res=300)
+
+    pushViewport(viewport(layout = grid.layout(1, 3)))
+    Df = as.data.frame(cbind(SAS[[i]]$Ed.wl, t(SAS[[i]]$Ed)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Ed.Time, format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p1 <- ggplot(data= Dfm, aes(x=Wavelength, y=value, group=t)) + geom_line(color="grey")
+
+    Df = as.data.frame(cbind(SAS[[i]]$Ed.wl, t(RRS[[i]]$Ed)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time[RRS[[i]]$ix.Lt.good], format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p1 <- p1 + geom_line(data= Dfm, aes(x=Wavelength, y=value, colour=t))
+   # p1 <- p1 + geom_line(data=data.frame(Wavelength=SAS[[i]]$Ed.wl, Ed=RRS[[i]]$Ed.mean), aes(x=Wavelength, y=Ed),color="black")
+    p1 <- p1 + labs(y=expression(paste("E"["d"],"(",mu,"W.cm"^"-2","nm"^"-1",")")))
+    p1 <- p1 + guides(colour=F)
+    p1 <- p1 + labs(title=as.POSIXct(RRS$DateTime[i],origin= "1970-01-01"))
+
+   Df = as.data.frame(cbind(SAS[[i]]$Li.wl, t(SAS[[i]]$Li)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Li.Time, format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p2 <- ggplot(data= Dfm, aes(x=Wavelength, y=value, group=t)) + geom_line(color="grey")
+
+    Df = as.data.frame(cbind(SAS[[i]]$Li.wl, t(RRS[[i]]$Li)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time[RRS[[i]]$ix.Lt.good], format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p2 <- p2 + geom_line(data= Dfm, aes(x=Wavelength, y=value, colour=t))
+  #  p2 <- p2 + geom_line(data=data.frame(Wavelength=SAS[[i]]$Li.wl, Li=RRS[[i]]$Li.mean), aes(y=Li),color="black")
+    p2 <- p2 + labs(y=expression(paste("L"["sky"],"(",mu,"W.cm"^"-2","nm"^"-1","sr"^"-1",")")))
+    p2 <- p2 + guides(colour=F)
+
+    Df = as.data.frame(cbind(SAS[[i]]$Lt.wl, t(SAS[[i]]$Lt)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time, format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p3 <- ggplot(data= Dfm, aes(x=Wavelength, y=value, group=t)) + geom_line(color="grey")
+
+    Df = as.data.frame(cbind(SAS[[i]]$Lt.wl, t(RRS[[i]]$Lt)))
+    names(Df) <- c("Wavelength", format(SAS[[i]]$Lt.Time[RRS[[i]]$ix.Lt.good], format="%H:%M:%S"))
+    Dfm <- melt(Df, id.vars = "Wavelength")
+    names(Dfm) <- c("Wavelength", "t", "value")
+    p3 <- p3 + geom_line(data= Dfm, aes(x=Wavelength, y=value, colour=t))
+    #p3 <- p3 + geom_line(data=data.frame(Wavelength=SAS[[i]]$Lt.wl, Lt=RRS[[i]]$Lt.mean),aes(y=Lt),color="black")
+    p3 <- p3 + labs(y=expression(paste("L"["sea"],"(",mu,"W.cm"^"-2","nm"^"-1","sr"^"-1",")")))
+    p3 <- p3 + guides(colour=F)
+
+
+    print(p1, vp = viewport(layout.pos.row = 1, layout.pos.col = 1))
+    print(p2, vp = viewport(layout.pos.row = 1, layout.pos.col = 2))
+    print(p3, vp = viewport(layout.pos.row = 1, layout.pos.col = 3))
+
+    dev.off()
+
+
+}
+
+}
+@
+
+
+
+
+\end{document}
