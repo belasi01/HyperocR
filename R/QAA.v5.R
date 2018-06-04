@@ -73,11 +73,3 @@ QAA.v5 <- function(waves, Rrs)
 
 	return(list(a=a,bb=bb))
 	}
-
-Kd_QAA  <- function(a,bb) {
-
-	coeff <- c(1.320, 4.12, 0.504, 10.304)
-
-	Kd <- coeff[1]*a + coeff[2] ^ (1 - coeff[3] * exp(-coeff[4] * a)) * bb
-	return(Kd)
-	}

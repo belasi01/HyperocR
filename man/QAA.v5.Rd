@@ -16,3 +16,6 @@ QAA.v5(waves, Rrs)
 Quasi-Analytical Algorithm to retreive spectral absorption and backscattering coefficients.
 The current paramterisation is version 5
 }
+\author{
+Simon Bélanger
+}
