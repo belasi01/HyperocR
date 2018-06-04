@@ -6,7 +6,8 @@
 #' @param Rrs os a vector of Rrs (length is the same as waves)
 #'
 #'
-
+#'@author Simon Bélanger
+#'@export
 
 QAA.v5 <- function(waves, Rrs)
 {
