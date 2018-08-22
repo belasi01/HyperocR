@@ -2,7 +2,8 @@
 % Please edit documentation in R/Kd.Lee.R
 \name{Kd.Lee}
 \alias{Kd.Lee}
-\title{Semi-analytical model of Lee et al JGR 2005.}
+\title{Semi-analytical model of Lee et al JGR 2005.
+WARNING: This is a temporary model that doesn't considered the SZA...}
 \usage{
 Kd.Lee(a, bb)
 }
@@ -13,6 +14,7 @@ Kd.Lee(a, bb)
 }
 \description{
 Semi-analytical model of Lee et al JGR 2005.
+WARNING: This is a temporary model that doesn't considered the SZA...
 }
 \author{
 Simon Bélanger

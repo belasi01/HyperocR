@@ -1,5 +1,7 @@
 #'
 #' Semi-analytical model of Lee et al JGR 2005.
+#' WARNING: This is a temporary model that doesn't considered the SZA...
+#'
 #'
 #' @param a is a vector of absorption coefficient
 #' @param b os a vector of backscattering coefficient (length is the same as a)

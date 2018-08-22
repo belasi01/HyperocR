@@ -1,14 +1,14 @@
+#' Quasi-Analytical Algorithm from Lee et al. App. Opt. (2002)
 #'
-#' Quasi-Analytical Algorithm to retreive spectral absorption and backscattering coefficients.
-#' The current paramterisation is version 5
+#' This is the version 5
 #'
 #' @param waves is a vector of wavelenghts
-#' @param Rrs os a vector of Rrs (length is the same as waves)
+#' @param Rrs is the remote sensing reflectance having the same
+#' length as waves.
 #'
+#' @author Simon Bélanger
+#' @export
 #'
-#'@author Simon Bélanger
-#'@export
-
 QAA.v5 <- function(waves, Rrs)
 {
 	#wl  <- c(412,443,490,510,555,670)
@@ -19,7 +19,7 @@ QAA.v5 <- function(waves, Rrs)
   ix490 = which.min(abs(waves-490))
   ix510 = which.min(abs(waves-510))
   ix555 = which.min(abs(waves-555))
-  #ix640 = which.min(abs(waves-640))
+  ix640 = which.min(abs(waves-640))
   ix667 = which.min(abs(waves-667))
 
   nwaves = length(waves)
@@ -35,7 +35,8 @@ QAA.v5 <- function(waves, Rrs)
 	  print("No 667 nm channel")
 	  Rrs667 = 1.27*Rrs[ix555]^1.47 + 0.00018*(Rrs[ix490]/Rrs[ix555])^-3.19
 	  rrs667 = Rrs667 / (0.52 + 1.7*Rrs667)
-	} else {
+	} else
+	  {
 	  up.lim <- 20 * Rrs[ix555]^1.5
 	  low.lim <- 0.9 * Rrs[ix555]^1.7
 	  if (Rrs[ix667] > up.lim | Rrs[ix667] < low.lim ) {
@@ -72,4 +73,6 @@ QAA.v5 <- function(waves, Rrs)
 	a <-  ((1 - X)*bb)/X
 
 	return(list(a=a,bb=bb))
+
 	}
+

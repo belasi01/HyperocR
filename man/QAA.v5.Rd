@@ -2,19 +2,18 @@
 % Please edit documentation in R/QAA.v5.R
 \name{QAA.v5}
 \alias{QAA.v5}
-\title{Quasi-Analytical Algorithm to retreive spectral absorption and backscattering coefficients.
-The current paramterisation is version 5}
+\title{Quasi-Analytical Algorithm from Lee et al. App. Opt. (2002)}
 \usage{
 QAA.v5(waves, Rrs)
 }
 \arguments{
 \item{waves}{is a vector of wavelenghts}
 
-\item{Rrs}{os a vector of Rrs (length is the same as waves)}
+\item{Rrs}{is the remote sensing reflectance having the same
+length as waves.}
 }
 \description{
-Quasi-Analytical Algorithm to retreive spectral absorption and backscattering coefficients.
-The current paramterisation is version 5
+This is the version 5
 }
 \author{
 Simon Bélanger
