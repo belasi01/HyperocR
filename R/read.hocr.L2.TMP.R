@@ -5,7 +5,7 @@
 #'
 #'@export
 
-read.hocr.L2 <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
+read.hocr.L2.TMP <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
 
   print(paste("Reading:", filen))
 
@@ -36,36 +36,31 @@ read.hocr.L2 <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
 
   nDarks <- rep(0,ninst)
   nRecs  <- rep(0,ninst)
-  waves <- matrix(NA, ncol=ninst, nrow = 137)
   list.Darks <- list()
   list.Darks.Time <- list()
   list.Meas <- list()
   list.Meas.Time <- list()
   mean.Darks <- matrix(NA, ncol=ninst, nrow = 137)
+  waves <- matrix(NA, ncol=ninst, nrow = 137)
 
 
   # Count the number of header lines
   id = file(filen, "r")
   line = strsplit(readLines(con=id, n =1), " ") # Reads the first header line
   nrec = 1
-  ncal=0
   while (line != "character(0)"){
-    line = strsplit(readLines(con=id, n =1), " ")
+    line = unlist(strsplit(readLines(con=id, n =1), " "))
     nrec <- nrec+1
-    #print(line)
-    if (ncal ==  0) {
-        line = unlist(line)
-       if (line[1] == "CAL_FILE_NAMES") {
-        calfiles <- unlist(strsplit(line[3],","))
-        ncal = length(calfiles)
-        print(paste("Number of calibration files is: ", ncal))
-        print(calfiles)
-        # Extract the first three charcters of the cal name
-        Cal.Ids =  toupper(str_sub(calfiles,1,3))
-        Block.Type = str_sub(Cal.Ids, 3,3)
-        id.Dark = which(Block.Type =="D")
-        id.Meas = which(Block.Type !="D")
-       }
+    if (line[1] == "CAL_FILE_NAMES") {
+      calfiles <- unlist(strsplit(line[3],","))
+      ncal = length(calfiles)
+      print(paste("Number of calibration files is: ", ncal))
+      print(calfiles)
+      # Extract the first three charcters of the cal name
+      Cal.Ids =  toupper(str_sub(calfiles,1,3))
+      Block.Type = str_sub(Cal.Ids, 3,3)
+      id.Dark = which(Block.Type =="D")
+      id.Meas = which(Block.Type !="D")
     }
   }
   nHeaderLines = nrec - 1
@@ -73,30 +68,48 @@ read.hocr.L2 <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
   print(paste("Number of header lines:", nHeaderLines))
 
   # Count the number of dark lines of the first block
-  for (i in 1:ninst) {
+ # for (i in 1:ninst) {
+ #   line = strsplit(readLines(con=id, n =1), " ")
+ #  while (line != "character(0)"){
+ #      line = strsplit(readLines(con=id, n =1), " ")
+ #      nrec <- nrec+1
+ #    }
+ #    nDarks[i] = nrec
+ #    nrec = 0
+#    print(paste("Number of darks for", instruments[i],
+ #               ":",nDarks[i]))
+  #}
+
+  #for (i in 1:ninst) {
+   # line = strsplit(readLines(con=id, n =1), " ")
+    #while (line != "character(0)"){
+    #  line = strsplit(readLines(con=id, n =1), " ")
+    #  nrec <- nrec+1
+    #}
+    #nRecs[i] <- nrec
+  #  nrec = 0
+  #  print(paste("Number of measurements for", instruments[i],
+  #              ":",nRecs[i]))
+  #}
+
+  # Count the number of dark lines of each block
+  nRecs = rep(0,ncal)
+  mean.Darks <- matrix(NA, ncol=ncal, nrow = 137)
+  waves <- matrix(NA, ncol=ncal, nrow = 137)
+
+  for (i in 1:ncal) {
     line = strsplit(readLines(con=id, n =1), " ")
     while (line != "character(0)"){
-      line = strsplit(readLines(con=id, n =1), " ")
-      nrec <- nrec+1
+          line = strsplit(readLines(con=id, n =1), " ")
+          nrec <- nrec+1
     }
-    nDarks[i] = nrec
+    nRecs[i] = nrec
     nrec = 0
-    print(paste("Number of darks for", instruments[i],
-                ":",nDarks[i]))
+
+    print(paste("Number of records for", calfiles[i],
+                   ":",nRecs[i]))
   }
 
-  # Count the number of measurement of the fisrt block
-  for (i in 1:ninst) {
-    line = strsplit(readLines(con=id, n =1), " ")
-    while (line != "character(0)"){
-      line = strsplit(readLines(con=id, n =1), " ")
-      nrec <- nrec+1
-    }
-    nRecs[i] <- nrec
-    nrec = 0
-    print(paste("Number of measurements for", instruments[i],
-                ":",nRecs[i]))
-  }
   close(id)
 
   # Reads and store the header
@@ -108,7 +121,7 @@ read.hocr.L2 <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
   close(id)
 
   # Adjust the actual numbers of lines for each parameters
-  nDarks <- nDarks - 2
+  #nDarks <- nDarks - 2
   nRecs  <- nRecs  - 2
 
   # Reads darks and extract the wavelenght and time
@@ -141,15 +154,21 @@ read.hocr.L2 <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
   }
 
   # Read the measurements
-  for (i in 1:ninst) {
+#  for (i in 1:ninst) {
+  for (i in 1:ncal) {
     if (i==1) {
-      skip = skip + nDarks[ninst] + 3
+#      skip = skip + nDarks[ninst] + 3
+      skip = skip  + 2
       df =  read.table(filen, skip = skip, nrows = nRecs[i], header=T)
     } else
     {
       skip = skip + nRecs[i-1] + 3
       df =  read.table(filen, skip = skip , nrows = (nRecs[i]), header=T)
     }
+
+    XLambda = names(df)[3:139]
+    waves[,i] = as.numeric(str_sub(XLambda, 2,7))
+
     Meas = as.matrix(df[,3:139])
     DateDay = df[,dim(df)[2]-2]
     Year = as.numeric(str_sub(DateDay, 1,4))
