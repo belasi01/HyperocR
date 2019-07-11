@@ -3,9 +3,6 @@
 \name{get.rho550}
 \alias{get.rho550}
 \title{Retreive sea-surface reflectance from a look-up-tables}
-\usage{
-get.rho550(thetaV, delta.phi, windspeed, thetaS)
-}
 \arguments{
 \item{thetaV}{is the viewing zenith angle}
 

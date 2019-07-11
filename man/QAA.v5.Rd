@@ -3,9 +3,6 @@
 \name{QAA.v5}
 \alias{QAA.v5}
 \title{Quasi-Analytical Algorithm from Lee et al. App. Opt. (2002)}
-\usage{
-QAA.v5(waves, Rrs)
-}
 \arguments{
 \item{waves}{is a vector of wavelenghts}
 

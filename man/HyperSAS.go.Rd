@@ -3,10 +3,6 @@
 \name{HyperSAS.go}
 \alias{HyperSAS.go}
 \title{HyperSAS data processing launcher}
-\usage{
-HyperSAS.go(report = FALSE, use.SAS.RData = FALSE, use.COMPASS = FALSE,
-  DIAGNOSTIC.PLOTS = FALSE)
-}
 \arguments{
 \item{report}{is a logical parameter indicating whether or not a
 PDF report is produced using knitr.  Default is FALSE.}

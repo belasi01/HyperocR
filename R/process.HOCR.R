@@ -27,7 +27,7 @@
 #'
 #' @author Simon Bélanger
 #' @export
-#'
+#' @name process.HOCR
 process.HOCR <- function (filen=filen,
                           Station=Station,
                           Lu0.Depth = 0.1,

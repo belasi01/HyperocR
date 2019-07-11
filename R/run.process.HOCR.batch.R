@@ -19,9 +19,7 @@
 #'
 #' @author Simon Bélanger
 #' @export
-
-
-
+#' @name run.process.HOCR.batch
 run.process.HOCR.batch <- function(log.file="log.txt",
                                    data.path="./",
                                    Ag.path="./",

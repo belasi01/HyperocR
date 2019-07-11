@@ -3,9 +3,6 @@
 \name{create.HyperSAS.report}
 \alias{create.HyperSAS.report}
 \title{Create a PDF report for the HyperSAS data collection for a station or a transit}
-\usage{
-create.HyperSAS.report(dirdat, TYPE = "STATION", DIAGNOSTIC.PLOTS = FALSE)
-}
 \arguments{
 \item{dirdat}{is the current directory path contaning the files to process.}
 

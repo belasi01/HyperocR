@@ -3,11 +3,6 @@
 \name{compute.Rrs.SAS}
 \alias{compute.Rrs.SAS}
 \title{Compute the remote sensing reflectance from HyperSAS data}
-\usage{
-compute.Rrs.SAS(SAS, tilt.max = 3, quantile.prob = 0.5, windspeed = 5,
-  thetaV = 40, Dphi = 90, NIR.CORRECTION = "NULL", Good = 1,
-  use.COMPASS = FALSE)
-}
 \arguments{
 \item{SAS}{is a list return by \code{\link{read.horc.L2.SAS}}.}
 

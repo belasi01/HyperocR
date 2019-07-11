@@ -4,7 +4,7 @@
 #' @author Simon Bélanger
 #'
 #'@export
-
+#'@name read.hocr.L2
 read.hocr.L2 <- function(filen, RADIOMETERS=NA, APPLY.DARKS=TRUE){
 
   print(paste("Reading:", filen))

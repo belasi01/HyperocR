@@ -79,8 +79,7 @@
 #'@seealso \code{\link{process.HyperSAS}} and \code{\link{read.hocr.SAS}}
 #'@author Simon Bélanger
 #'@export
-
-
+#'@name compute.Rrs.SAS
 compute.Rrs.SAS <- function(SAS,
                             tilt.max= 3,
                             quantile.prob = 0.5,

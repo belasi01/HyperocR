@@ -35,9 +35,7 @@
 #'
 #'
 #'@export
-#'
-
-
+#'@name read.hocr.L2.SAS
 read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
 
   if (VERBOSE) print(paste("Reading:", fn))

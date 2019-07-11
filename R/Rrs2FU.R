@@ -1,10 +1,12 @@
-
-#
-
+#' Compute the Forel-Ule water class from a remote sensing reflectance measurement
+#'
+#' @param Waves vector of wavelenghts for the input spectral reflectance spectra
+#' @param Rrs vector of the input spectral reflectance spectra (same lenght as waves)
+#'
+#' @author Simon Bélanger
+#' @export
+#' @name Rrs2FU
 Rrs2FU <-function(Waves, Rrs){
-  #CIE = read.table("~/Copy/R/Tables/CIE/lin2012xyz2e_1_7sf.csv", sep=",")
-  #CIE = read.table("~/Copy/R/Tables/CIE/ciexyz31.csv", sep=",")
-  #names(CIE) <- c("waves", "x", "y", "z")
 
   # interpolate Rrs to CIE wavelength
   Rrs.int = spline(Waves, Rrs, xout=CIE$waves, method = "natural")$y

@@ -3,11 +3,6 @@
 \name{process.HOCR}
 \alias{process.HOCR}
 \title{Processed in-water HyperOCR data}
-\usage{
-process.HOCR(filen = filen, Station = Station, Lu0.Depth = 0.1,
-  EdZ.Depth = NA, Delta.LuZ.Depth = NA, Ag.file = NA, Ap.file = NA,
-  Bbp.file = NA)
-}
 \arguments{
 \item{filen}{is the name of a L2 file in *.dat format procuded by
 Prosoft}
@@ -25,9 +20,9 @@ Prosoft}
 
 \item{Ag.file}{is the full file name and path of the RData file containing CDOM absorption}
 
-\item{Bbp.file}{is the full file name and path of the RData file containing CDOM absorption}
+\item{Ap.file}{is the full file name and path of the RData file containing particles absorption}
 
-\item{At.file}{is the full file name and path of the RData file containing CDOM absorption}
+\item{Bbp.file}{is the full file name and path of the RData file containing bbp}
 }
 \description{
 This routine compute AOPs from in-water hyperspectral

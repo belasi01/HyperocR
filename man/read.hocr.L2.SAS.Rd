@@ -4,9 +4,6 @@
 \alias{read.hocr.L2.SAS}
 \title{Reads HyperOCR data collected using Satlantic
       Hyperspectral Surface Aquisition System (HyperSAS)}
-\usage{
-read.hocr.L2.SAS(fn, VERBOSE = TRUE, APPLY.DARK = TRUE)
-}
 \arguments{
 \item{fn}{is the file name}
 

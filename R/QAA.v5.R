@@ -8,7 +8,7 @@
 #'
 #' @author Simon Bélanger
 #' @export
-#'
+#' @name QAA.v5
 QAA.v5 <- function(waves, Rrs)
 {
 	#wl  <- c(412,443,490,510,555,670)

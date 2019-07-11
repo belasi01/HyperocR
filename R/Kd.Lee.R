@@ -7,9 +7,9 @@
 #' @param b os a vector of backscattering coefficient (length is the same as a)
 #'
 #'
-#'@author Simon Bélanger
-#'@export
-
+#' @author Simon Bélanger
+#' @export
+#' @name Kd.Lee
 Kd.Lee  <- function(a,bb) {
 
   coeff <- c(1.320, 4.12, 0.504, 10.304)

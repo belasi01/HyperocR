@@ -21,7 +21,7 @@
 #'@author Simon Bélanger
 #'
 #'@export
-
+#'@name get.rho550
 get.rho550 <- function (thetaV, delta.phi, windspeed,thetaS){
 
   xthetaV = as.numeric(dimnames(rho550)$thetaV)

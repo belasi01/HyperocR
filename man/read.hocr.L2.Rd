@@ -2,15 +2,12 @@
 % Please edit documentation in R/read.hocr.L2.R
 \name{read.hocr.L2}
 \alias{read.hocr.L2}
-\title{Read HOCR files processed at L2 using Prosoft and converted into ASCII}
-\usage{
-read.hocr.L2(filen, RADIOMETERS = NA, APPLY.DARKS = TRUE)
-}
+\title{Read HOCR files processed at L2 (*.dat) using Prosoft and converted into ASCII}
 \arguments{
 \item{filen}{is the file name (*.dat)}
 }
 \description{
-Read HOCR files processed at L2 using Prosoft and converted into ASCII
+Read HOCR files processed at L2 (*.dat) using Prosoft and converted into ASCII
 }
 \author{
 Simon Bélanger

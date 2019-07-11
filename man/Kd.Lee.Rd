@@ -4,9 +4,6 @@
 \alias{Kd.Lee}
 \title{Semi-analytical model of Lee et al JGR 2005.
 WARNING: This is a temporary model that doesn't considered the SZA...}
-\usage{
-Kd.Lee(a, bb)
-}
 \arguments{
 \item{a}{is a vector of absorption coefficient}
 

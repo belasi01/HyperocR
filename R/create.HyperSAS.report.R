@@ -29,6 +29,7 @@
 #'@seealso \code{\link{process.HyperSAS}}, \code{\link{HyperSAS.go}}
 #'@author Simon Bélanger
 #'@export
+#'@name create.HyperSAS.report
 create.HyperSAS.report <- function(dirdat,
                                    TYPE="STATION",
                                    DIAGNOSTIC.PLOTS=FALSE){

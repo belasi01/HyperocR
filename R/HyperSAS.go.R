@@ -59,7 +59,7 @@
 #'@author Simon Bélanger
 #'
 #'@export
-
+#' @name HyperSAS.go
 HyperSAS.go <- function(report=FALSE,
                         use.SAS.RData=FALSE,
                         use.COMPASS=FALSE,

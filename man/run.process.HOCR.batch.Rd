@@ -3,14 +3,24 @@
 \name{run.process.HOCR.batch}
 \alias{run.process.HOCR.batch}
 \title{Run batch processing for HyperOCR}
-\usage{
-run.process.HOCR.batch(log.file = "log.txt", data.path = "./",
-  Ag.path = "./", Ap.path = "./", Bbp.path = "./")
-}
 \arguments{
 \item{data.path}{is the full path where the L2 data are stored (*.dat)}
+
+\item{Ag.path}{is the full path where the CDOM  absorption files (RData format) are stored}
+
+\item{Ap.path}{is the full path where the CDOM files (RData format) are stored}
 }
 \description{
+This programe will read the log file and process every file
+foung in the log file. The files must be put in the same folders
+(e.g., ../dat/). The output will be save as PNG and RData.
+The user can provide IOPs to estimate the K_Lu in order to make
+the extrapolation of the Lu0- measured near the sea surface
+(typically around 10 to 15 cm from the sea surface).
+}
+\details{
+No shadow correction is applied yet.
+
 @param log.file is the name of the ASCII file containing the
 list of L2 data to processed.
 }

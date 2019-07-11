@@ -3,10 +3,6 @@
 \name{process.HyperSAS}
 \alias{process.HyperSAS}
 \title{Process a HyperSAS data folder}
-\usage{
-process.HyperSAS(dirdat, TYPE = "STATION", use.SAS.RData = FALSE,
-  use.COMPASS = FALSE)
-}
 \arguments{
 \item{dirdat}{is the current directory path contaning the files to process.}
 

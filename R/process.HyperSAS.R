@@ -38,10 +38,7 @@
 #'
 #'@author Simon Bélanger
 #'@export
-
-
-
-
+#'@name process.HyperSAS
 process.HyperSAS<- function(dirdat,
                             TYPE="STATION",
                             use.SAS.RData=FALSE,
