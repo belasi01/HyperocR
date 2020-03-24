@@ -4,7 +4,7 @@
 #' This programe will read the log file and process every file
 #' foung in the log file. The files must be put in the same folders
 #' (e.g., ../dat/). The output will be save as PNG and RData.
-#' The user can provide IOPs to estimate the K_Lu in order to make
+#' The user can provide IOPs to estimate the K_Lu or K_u in order to make
 #' the extrapolation of the Lu0- measured near the sea surface
 #' (typically around 10 to 15 cm from the sea surface).
 #'
@@ -12,7 +12,8 @@
 #'
 #'
 #'  @param log.file is the name of the ASCII file containing the
-#' list of L2 data to processed.
+#' list of L2 data to processed with parameters
+#' (see process.HOCR for details).
 #' @param data.path is the full path where the L2 data are stored (*.dat)
 #' @param Ag.path is the full path where the CDOM  absorption files (RData format) are stored
 #' @param Ap.path is the full path where the CDOM files (RData format) are stored
@@ -82,9 +83,12 @@ run.process.HOCR.batch <- function(log.file="log.txt",
     }
     if (file.exists(raw.file)) {
       print(paste("Processing ", raw.file))
+
+      #### Check if Lu0 or Eu0 is used
       HOCR <- process.HOCR(filen=raw.file,
                            Station=log$Station[i],
                            Lu0.Depth = log$Lu0.Depth[i],
+                           Eu0.Depth = log$Eu0.Depth[i],
                            EdZ.Depth = log$Ed.Depth[i],
                            Delta.LuZ.Depth = log$Delta.Depth[i],
                            Ag.file =  Ag.file,
@@ -100,12 +104,23 @@ run.process.HOCR.batch <- function(log.file="log.txt",
       par(mfrow=c(2,1))
       par(mar=c(4,5,1,1))
 
-      plot(HOCR$waves, HOCR$Rrs,
-           type="l", lwd=2,
-           main=paste(HOCR$Station, HOCR$DateTime),
-           ylab=expression(R[rs](sr^-1)),
-           xlab=expression(lambda))
-      lines(HOCR$waves,HOCR$uRrs, col=2, lwd=1)
+      if (!is.na(log$Eu0.Depth[i])) {
+        plot(HOCR$waves, HOCR$R,
+             type="l", lwd=2,
+             main=paste(HOCR$Station, HOCR$DateTime),
+             ylab=expression(R),
+             xlab=expression(lambda))
+        lines(HOCR$waves,HOCR$uR, col=2, lwd=1)
+      } else if (!is.na(log$Lu0.Depth[i])) {
+        plot(HOCR$waves, HOCR$Rrs,
+             type="l", lwd=2,
+             main=paste(HOCR$Station, HOCR$DateTime),
+             ylab=expression(R[rs](sr^-1)),
+             xlab=expression(lambda))
+        lines(HOCR$waves,HOCR$uRrs, col=2, lwd=1)
+      }
+
+
       legend("topleft", c("uncorrected", "corrected"), lwd=c(1,2), col=c(2,1))
 
       if (!is.na(HOCR$K.CORRECTION)) {

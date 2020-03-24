@@ -9,13 +9,16 @@ Prosoft}
 
 \item{Station}{is the station ID}
 
-\item{Lu0.Depth}{is the approximate depth of the Lu0 sensor
-(Default is 0.1 m)}
+\item{Lu0.Depth}{is the approximate depth (in meters) of the Lu0 sensor
+(Default is NA assuming there is no Lu0 sensor)}
 
-\item{EdZ.Depth}{is the depth of the EdZ sensor
+\item{Eu0.Depth}{is the approximate depth (in meters) of the Eu0 sensor
+(Default is NA assuming there is no Eu0 sensor)}
+
+\item{EdZ.Depth}{is the depth (in meters) of the EdZ sensor
 (Default is NA assuming there is no EdZ sensor)}
 
-\item{Delta.LuZ.Depth}{is the distance between Lu0 and LuZ sensors
+\item{Delta.LuZ.Depth}{is the distance between Lu0 and LuZ sensors (in meters)
 (Default is NA assuming there is no LuZ sensor)}
 
 \item{Ag.file}{is the full file name and path of the RData file containing CDOM absorption}
@@ -24,18 +27,48 @@ Prosoft}
 
 \item{Bbp.file}{is the full file name and path of the RData file containing bbp}
 }
+\value{
+a long list including raw and processed data.
+}
 \description{
 This routine compute AOPs from in-water hyperspectral
 measurements performed using HyperOCR radiometers deployed
 at the water surface with an arm and (optionaly) with a
-tripod. Three set-ups have been implemented so far:
+tripod. Four set-ups have been implemented so far:
 }
 \details{
-1. Upwelling radiance near the water surface (i.e. Lu0) only
-2. Upwelling radiance near the water surface (i.e. Lu0) and
-downwelling irradiance at depth Z (EdZ)
-3. Upwelling radiance near the water surface (i.e. Lu0) and
+1. Upwelling radiance near the air-water interface (i.e. Lu0) and
+downwelling irradiance at depth Z (EdZ). Tripod set up.
+2. Upwelling radiance near the air-water interface (i.e. Lu0) and
 upwelling radiance at depth Z (LuZ).
+3. Upwelling radiance near the air-water interface (i.e. Lu0) only
+4. Upwelling irradiance near the air-water interface (i.e. Eu0) only
+
+
+   The HOCR set up needs at least on sensor looking down just beneath
+   the air-water interface. It could be either a radiance sensor (Lu0) or
+   an irradiance sensor (Eu0). If the set up uses a Lu0 sensor, you must
+   provide the depth at which the sensor was submerged using the parameter
+   Lu0.Depth. For example, if the Lu0 sensor was lowered at 10cm below the
+   surface, Lu0.Depth = 0.1. If the set up uses a Eu0 sensor, then
+   Eu0.Depth must be provided.
+   NOTE: non-NA is therefore mandatory for Lu0.Depth or Eu0.Depth. This
+   depth will be used to apply a correction to retrieve Lu0- or Eu0-. This
+   correction needs an estimation of the diffuse attenuation coefficient
+   for the upwelling radiance Lu or irradiance Eu (K_Lu or K_u).
+   In the set up #1 ( Lu0 and EdZ sensors available), Kd is estimated
+   using Ed0+ and EdZ sensors, and KLu=Kd (only true in opticaly deep water).
+   In the set up #2 (Lu0 and LuZ), K_Lu is computed from the measurements
+
+   In the set up #3 and #4, K_Lu or K_u can only be approximated using the
+   measured IOPs. No correction will be apply is IOPs are not provided.
+
+   If Lu0 is provided, then the code will compute Rrs=Lw/Ed.
+   If Eu0 is provided, then the code will compute R=Eu/Ed.
+
+
+   IMPORTANT: The instrument self-shadow correction has not been
+   implemented yet.
 }
 \author{
 Simon Bélanger
