@@ -21,5 +21,6 @@ Depends:
     xtable,
     reshape2,
     grid,
-    Riops
+    Riops,
+    data.table
 RoxygenNote: 7.1.0
