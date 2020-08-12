@@ -10,6 +10,8 @@
 #' MERIS,
 #' S2A,
 #' S2B,
+#' S3A,
+#' S3B,
 #' MODISA,
 #' MODIST,
 #' VIIRS,
@@ -706,6 +708,146 @@ spectralRho.2.sensor <- function(waves,rho,SENSOR="OLI", PLOT=FALSE) {
         add_trace(x=~PlanetScope_0F_10$waves,y=~PlanetScope_0F_10$B4, name = 'B4', color = I("black"), fill = 'tozeroy') %>%
         add_trace(x=~PlanetScope_0F_10$waves,y=~rho.int/max(rho.int, na.rm = T), name = 'Rho', color = I("black")) %>%
         layout(xaxis = list(title = 'Wavelenght', range=c(400,900)),
+               yaxis = list(title = 'RSR'))
+      print(p)
+    }
+
+    return(data.frame(waves=waves.sensor,rho=rho.sensor))
+  }
+
+  if (SENSOR == "S3A") {
+    nbands = ncol(S3A)-1
+    rho.sensor = rep(NA, nbands)
+    waves.sensor = rep(NA, nbands)
+
+    # interpolate the input spectra to RSR
+    rho.int = spline(waves, rho, xout=S3A$waves, method = "natural")$y
+    rho.int[rho.int < 0] = 0
+    rho.int[S3A$waves < min(waves)] = 0
+    rho.int[S3A$waves > max(waves)] = 0
+
+    # loop on wavebands
+    for (i in 2:ncol(S3A)) {
+      print(paste("Band : ",names(S3A)[i]))
+
+      # integrate on non-zero indices
+      ix = which(S3A[,i] > 0) # where RSR is not zero
+      fx.linear <- approxfun(S3A$waves[ix], S3A[ix,i]*rho.int[ix])
+      X = integrate(fx.linear, min(S3A$waves[ix]), max(S3A$waves[ix]), subdivisions=1000, stop.on.error = FALSE)[1]
+      num = X$value
+
+      fx.linear <- approxfun(S3A$waves[ix], S3A[ix,i])
+      X = integrate(fx.linear, min(S3A$waves[ix]), max(S3A$waves[ix]), subdivisions=1000, stop.on.error = FALSE)[1]
+      denom = X$value
+
+      rho.sensor[(i-1)] = num/denom
+
+      fx.linear <- approxfun(S3A$waves[ix], S3A[ix,i]*S3A$waves[ix])
+      X = integrate(fx.linear, min(S3A$waves[ix]), max(S3A$waves[ix]), subdivisions=1000, stop.on.error = FALSE)[1]
+      num = X$value
+
+
+      waves.sensor[(i-1)] = num/denom
+
+
+    }
+
+    # plot rho on top of RSRs
+    if (PLOT) {
+      p <- plot_ly(x=~S3A$waves,y=~S3A$B1, type = 'scatter', mode = 'lines', fill = 'tozeroy', color = I("violet"), name ="B1") %>%
+        add_trace(x=~S3A$waves,y=~S3A$B2, name = 'B2', color = I("darkviolet"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B3, name = 'B3', color = I("blue"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B4, name = 'B4', color = I("cyan"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B5, name = 'B5', color = I("green"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B6, name = 'B6', color = I("darkgreen"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B7, name = 'B7', color = I("orange"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B8, name = 'B8', color = I("red"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B9, name = 'B9', color = I("darkred"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B10, name = 'B10', color = I("darkred"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B11, name = 'B11', color = I("darkred"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B12, name = 'B12', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B13, name = 'B13', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B14, name = 'B14', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B15, name = 'B15', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B16, name = 'B16', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B17, name = 'B17', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B18, name = 'B18', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B19, name = 'B19', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B20, name = 'B20', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3A$waves,y=~S3A$B21, name = 'B21', color = I("black"), fill = 'tozeroy') %>%
+
+        add_trace(x=~S3A$waves,y=~rho.int/max(rho.int, na.rm = T), name = 'Rho', color = I("black")) %>%
+        layout(xaxis = list(title = 'Wavelenght', range=c(380,1050)),
+               yaxis = list(title = 'RSR'))
+      print(p)
+    }
+
+    return(data.frame(waves=waves.sensor,rho=rho.sensor))
+  }
+
+  if (SENSOR == "S3B") {
+    nbands = ncol(S3B)-1
+    rho.sensor = rep(NA, nbands)
+    waves.sensor = rep(NA, nbands)
+
+    # interpolate the input spectra to RSR
+    rho.int = spline(waves, rho, xout=S3B$waves, method = "natural")$y
+    rho.int[rho.int < 0] = 0
+    rho.int[S3B$waves < min(waves)] = 0
+    rho.int[S3B$waves > max(waves)] = 0
+
+    # loop on wavebands
+    for (i in 2:ncol(S3B)) {
+      print(paste("Band : ",names(S3B)[i]))
+
+      # integrate on non-zero indices
+      ix = which(S3B[,i] > 0) # where RSR is not zero
+      fx.linear <- approxfun(S3B$waves[ix], S3B[ix,i]*rho.int[ix])
+      X = integrate(fx.linear, min(S3B$waves[ix]), max(S3B$waves[ix]), subdivisions=1000, stop.on.error = FALSE)[1]
+      num = X$value
+
+      fx.linear <- approxfun(S3B$waves[ix], S3B[ix,i])
+      X = integrate(fx.linear, min(S3B$waves[ix]), max(S3B$waves[ix]), subdivisions=1000, stop.on.error = FALSE)[1]
+      denom = X$value
+
+      rho.sensor[(i-1)] = num/denom
+
+      fx.linear <- approxfun(S3B$waves[ix], S3B[ix,i]*S3B$waves[ix])
+      X = integrate(fx.linear, min(S3B$waves[ix]), max(S3B$waves[ix]), subdivisions=1000, stop.on.error = FALSE)[1]
+      num = X$value
+
+
+      waves.sensor[(i-1)] = num/denom
+
+
+    }
+
+    # plot rho on top of RSRs
+    if (PLOT) {
+      p <- plot_ly(x=~S3B$waves,y=~S3B$B1, type = 'scatter', mode = 'lines', fill = 'tozeroy', color = I("violet"), name ="B1") %>%
+        add_trace(x=~S3B$waves,y=~S3B$B2, name = 'B2', color = I("darkviolet"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B3, name = 'B3', color = I("blue"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B4, name = 'B4', color = I("cyan"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B5, name = 'B5', color = I("green"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B6, name = 'B6', color = I("darkgreen"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B7, name = 'B7', color = I("orange"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B8, name = 'B8', color = I("red"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B9, name = 'B9', color = I("darkred"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B10, name = 'B10', color = I("darkred"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B11, name = 'B11', color = I("darkred"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B12, name = 'B12', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B13, name = 'B13', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B14, name = 'B14', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B15, name = 'B15', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B16, name = 'B16', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B17, name = 'B17', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B18, name = 'B18', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B19, name = 'B19', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B20, name = 'B20', color = I("black"), fill = 'tozeroy') %>%
+        add_trace(x=~S3B$waves,y=~S3B$B21, name = 'B21', color = I("black"), fill = 'tozeroy') %>%
+
+        add_trace(x=~S3B$waves,y=~rho.int/max(rho.int, na.rm = T), name = 'Rho', color = I("black")) %>%
+        layout(xaxis = list(title = 'Wavelenght', range=c(380,1050)),
                yaxis = list(title = 'RSR'))
       print(p)
     }
