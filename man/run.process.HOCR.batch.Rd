@@ -4,11 +4,16 @@
 \alias{run.process.HOCR.batch}
 \title{Run batch processing for HyperOCR}
 \arguments{
+\item{log.file}{is the name of the ASCII file containing the
+list of L2 data to processed.}
+
 \item{data.path}{is the full path where the L2 data are stored (*.dat)}
 
 \item{Ag.path}{is the full path where the CDOM  absorption files (RData format) are stored}
 
-\item{Ap.path}{is the full path where the CDOM files (RData format) are stored}
+\item{Ap.path}{is the full path where the Ap files (RData format) are stored}
+
+\item{Bbp.path}{is the full path where the bbp files (RData format) are stored}
 }
 \description{
 This programe will read the log file and process every file
@@ -20,9 +25,6 @@ the extrapolation of the Lu0- measured near the sea surface
 }
 \details{
 No shadow correction is applied yet.
-
-@param log.file is the name of the ASCII file containing the
-list of L2 data to processed.
 }
 \author{
 Simon Bélanger

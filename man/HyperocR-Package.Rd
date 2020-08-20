@@ -3,7 +3,6 @@
 \docType{package}
 \name{HyperocR Package}
 \alias{HyperocR Package}
-\alias{HyperocR Package-package}
 \title{HyperocR : A package for reading and processing Hyperspectral Ocean Color data from Satlantic radiometers}
 \description{
 The HyperocR package provides functions to process in batch or single
