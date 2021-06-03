@@ -1,8 +1,8 @@
 #'
-#' Run batch processing for HyperOCR
+#' Run batch processing for surface in-water HyperOCR measurements
 #'
-#' This programe will read the log file and process every file
-#' foung in the log file. The files must be put in the same folders
+#' This programe reads a log file in which *L2.dat files coming for prosoft are listed for processing.
+#' Each file will be processed using the parameters provided in the log file. The files must be put in the same folders
 #' (e.g., ../dat/). The output will be save as PNG and RData.
 #' The user can provide IOPs to estimate the K_Lu or K_u in order to make
 #' the extrapolation of the Lu0- measured near the sea surface
@@ -11,12 +11,25 @@
 #' No shadow correction is applied yet.
 #'
 #'
-#'  @param log.file is the name of the ASCII file containing the
+#'@param log.file is the name of the ASCII file containing the
 #' list of L2 data to processed with parameters
 #' (see process.HOCR for details).
-#' @param data.path is the full path where the L2 data are stored (*.dat)
-#' @param Ag.path is the full path where the CDOM  absorption files (RData format) are stored
-#' @param Ap.path is the full path where the CDOM files (RData format) are stored
+#'@param data.path is the full path where the L2 data folder is stored (./dat/*.dat).
+#' Note that the path should not include the "dat" folder name. On the parent folder is needed.
+#'@param Ag.path is the full path where the CDOM  absorption files (RData format) are stored
+#'@param Ap.path is the full path where the particulate absorption files (RData format) are stored
+#'@param Bbp.path is the full path where the particulate backscattering files (RData format) are stored
+#'
+#'@details
+#'The HOCR radiometers can be deployed from small boats to estime hyperspectral remote sensing reflectance.
+#'Diffent setup are supported but the minimum is to heve one reference sensor in the air for Ed0+ and
+#'at least one sensor in-water for either Eu, Lu or Ed.  The depth at which the in-water sensor is emerged
+#'is given in the processing parameters in the log file. For example, if the Lu sensor near was lowered at 10cm below the
+#'surface, Lu0.Depth = 0.1. If the set up uses a Eu0 sensor, then Eu0.Depth must be provided.
+#'More accurate Rrs can be obtained using two Lu sensors emerged near the surface at two different depths,
+#'which allow a direct assessment of the diffuse attenuation coefficient for upwelling radiance (K_Lu).
+#'
+#'See \code{\link{process.HOCR}} for more details.
 #'
 #' @author Simon Bélanger
 #' @export
@@ -58,6 +71,14 @@ run.process.HOCR.batch <- function(log.file="log.txt",
   } else {
     log = read.table(file=log.file, header=T)
   }
+
+  # Check for missing columns in the log file and added if needed
+  if (is.null(log$Lu0.Depth)) log$Lu0.Depth = NA
+  if (is.null(log$Eu0.Depth)) log$Eu0.Depth = NA
+  if (is.null(log$Ed.Depth)) log$Ed.Depth = NA
+  if (is.null(log$Ag.file)) log$Ag.file = NA
+  if (is.null(log$Ap.file)) log$Ap.file = NA
+  if (is.null(log$Bbp.file)) log$Bbp.file = NA
 
   nfiles = length(log$HOCR.filename)
   print(paste(nfiles, "files to process."))
