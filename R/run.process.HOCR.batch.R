@@ -119,7 +119,7 @@ run.process.HOCR.batch <- function(log.file="log.txt",
       # Plot data
       time <- paste(unlist(str_split(log$UTCTime[i],":"))[1],
                     unlist(str_split(log$UTCTime[i],":"))[2],sep="")
-      png(file=paste(path.png,log$Station[i],"_",log$Date[i],"_",time,".png", sep=""),
+      png(file=file.path(path.png,paste(log$Station[i],"_",log$Date[i],"_",time,".png", sep="")),
           width=6, height=6, units="in", res=300)
 
       par(mfrow=c(2,1))
@@ -168,7 +168,7 @@ run.process.HOCR.batch <- function(log.file="log.txt",
       dev.off()
 
       # Saving data in RData format
-      save(HOCR, file=paste(path.out,log$Station[i],"_",log$Date[i],"_",time,".RData", sep=""))
+      save(HOCR, file=file.path(path.out,paste(log$Station[i],"_",log$Date[i],"_",time,".RData", sep="")))
 
 
     } else {

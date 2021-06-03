@@ -1,7 +1,7 @@
 Package: HyperocR
 Type: Package
 Title: Hyperspectral OCR data processing
-Version: 0.5-2
+Version: 0.5-3
 Date: 2021-06-03
 Author: Simon Belanger
 Maintainer: Simon Belanger, <simon_belanger@uqar.ca>
