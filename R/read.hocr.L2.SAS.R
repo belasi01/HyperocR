@@ -52,9 +52,25 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
 
   # counts the number of header lines
   nrec = 1
-  while (line != "character(0)"){
+  while (line[1] != "character(0)"){
     line = strsplit(readLines(con=id, n =1), " ")
     nrec <- nrec+1
+    #print(line[1])
+    if (line != "character(0)") {
+      if (line[[1]][1] == "CAL_FILE_NAMES") {
+        calfiles <- unlist(strsplit(line[[1]][3],","))
+        SATTHS   <- any(str_detect(calfiles, pattern = "SATTHS")) # Create a logical variable indicating if a THS sensor was present
+        ncal = length(calfiles)
+        print(paste("Number of calibration files is: ", ncal))
+        print(calfiles)
+        # Extract the first three charcters of the cal name
+        Cal.Ids =  toupper(str_sub(calfiles,1,3))
+        Block.Type = str_sub(Cal.Ids, 3,3)
+        id.Dark = which(Block.Type =="D")
+        id.Meas = which(Block.Type !="D")
+      }
+    }
+
   }
   nHeaderLines = nrec + 1
   if (VERBOSE) print(paste("Number of header lines:", nHeaderLines))
@@ -119,16 +135,22 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
   nLtLines = nrec
   if (VERBOSE) print(paste("Number of Lt records:",nLtLines))
 
-  # count the number of Ancillary measurements
-  line = strsplit(readLines(con=id, n =1), " ")
-  nrec = 0
-  while (line != "character(0)"){
+  if (SATTHS) {
+    # count the number of Ancillary measurements
     line = strsplit(readLines(con=id, n =1), " ")
-    nrec <- nrec+1
+    nrec = 0
+    while (line != "character(0)"){
+      line = strsplit(readLines(con=id, n =1), " ")
+      nrec <- nrec+1
+    }
+    nAncLines = nrec
+    if (VERBOSE) print(paste("Number of Ancillary records:",nAncLines))
+    close(id)
+  } else {
+    if (VERBOSE) print("No Tilt Heading Sensor (THS) detected")
+    close(id)
   }
-  nAncLines = nrec
-  if (VERBOSE) print(paste("Number of Ancillary records:",nAncLines))
-  close(id)
+
 
   # Reads and store the header
   id = file(fn, "r")
@@ -138,7 +160,7 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
   }
   close(id)
 
-  if (ProSoftVersion == "7.7.16_6") {
+  if (ProSoftVersion == "7.7.16_6" | ProSoftVersion == "7.7.19_2") {
     # Reads Ed darks and extract the wavelenght and time
     df.Ed.Darks =  read.table(fn, skip = nHeaderLines, nrows = (nDarkLinesEd-3), header=T)
     XLambda = names(df.Ed.Darks)[3:139]
@@ -159,10 +181,10 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
     Li.wl = as.numeric(str_sub(XLambda, 2,7))
 
     Li.Darks = as.matrix(df.Li.Darks[,3:139])
-    DateDay = df.Li.Darks[,146]
+    if (ProSoftVersion == "7.7.19_2") DateDay = df.Li.Darks[,145] else DateDay = df.Li.Darks[,146]
     Year = as.numeric(str_sub(DateDay, 1,4))
     DOY = as.numeric(str_sub(DateDay, 5,7))
-    Hour = df.Li.Darks[,147]
+    if (ProSoftVersion == "7.7.19_2") Hour = df.Li.Darks[,146] else Hour = df.Li.Darks[,147]
 
     Li.Darks.Time = as.POSIXct(paste(Year,DOY,Hour),
                                format="%Y %j %H:%M:%S",tz="GMT")
@@ -174,10 +196,10 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
     Lt.wl = as.numeric(str_sub(XLambda, 2,7))
 
     Lt.Darks = as.matrix(df.Lt.Darks[,3:139])
-    DateDay = df.Lt.Darks[,146]
+    if (ProSoftVersion == "7.7.19_2") DateDay = df.Lt.Darks[,145] else DateDay = df.Lt.Darks[,146]
     Year = as.numeric(str_sub(DateDay, 1,4))
     DOY = as.numeric(str_sub(DateDay, 5,7))
-    Hour = df.Lt.Darks[,147]
+    if (ProSoftVersion == "7.7.19_2") Hour = df.Lt.Darks[,146] else Hour = df.Lt.Darks[,147]
 
     Lt.Darks.Time = as.POSIXct(paste(Year,DOY,Hour),
                                format="%Y %j %H:%M:%S",tz="GMT")
@@ -200,10 +222,10 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
                        nrows = (nLiLines-3), header=T)
 
     Li = as.matrix(df.Li[,3:139])
-    DateDay = df.Li[,146]
+    if (ProSoftVersion == "7.7.19_2") DateDay = df.Li[,145] else DateDay = df.Li[,146]
     Year = as.numeric(str_sub(DateDay, 1,4))
     DOY = as.numeric(str_sub(DateDay, 5,7))
-    Hour = df.Li[,147]
+    if (ProSoftVersion == "7.7.19_2") Hour = df.Li[,146] else Hour = df.Li[,147]
     Li.Time = as.POSIXct(paste(Year,DOY,Hour),
                          format="%Y %j %H:%M:%S",tz="GMT")
     if (VERBOSE) print("Li")
@@ -213,10 +235,10 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
                        nrows = (nLtLines-2), header=T)
 
     Lt = as.matrix(df.Lt[,3:139])
-    DateDay = df.Lt[,146]
+    if (ProSoftVersion == "7.7.19_2") DateDay = df.Lt[,145] else DateDay = df.Lt[,146]
     Year = as.numeric(str_sub(DateDay, 1,4))
     DOY = as.numeric(str_sub(DateDay, 5,7))
-    Hour = df.Lt[,147]
+    if (ProSoftVersion == "7.7.19_2") Hour = df.Lt[,146] else Hour = df.Lt[,147]
     Lt.Time = as.POSIXct(paste(Year,DOY,Hour),
                          format="%Y %j %H:%M:%S",tz="GMT")
     if (VERBOSE) print("Lt")
@@ -245,19 +267,24 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
     }
 
     # Read Ancillary
-    df.Anc = read.table(fn, skip = nHeaderLines+nDarkLinesEd+nDarkLinesLi+nDarkLinesLt
-                        +nEdLines+nLiLines+nLtLines+3,
-                        nrows = (nAncLines), header=T)
+    if (SATTHS) {
+      df.Anc = read.table(fn, skip = nHeaderLines+nDarkLinesEd+nDarkLinesLi+nDarkLinesLt
+                          +nEdLines+nLiLines+nLtLines+3,
+                          nrows = (nAncLines), header=T)
 
-    names(df.Anc) = c("FRAME" , "TIMER" ,"ROLL", "PITCH",     "MAG_X", "MAG_Y",  "MAG_Z" ,
-                      "COMP" , "DATETAG",   "TIME" ,"COUNTS")
+      names(df.Anc) = c("FRAME" , "TIMER" ,"ROLL", "PITCH",     "MAG_X", "MAG_Y",  "MAG_Z" ,
+                        "COMP" , "DATETAG",   "TIME" ,"COUNTS")
 
-    DateDay = df.Anc[,9]
-    Year = as.numeric(str_sub(DateDay, 1,4))
-    DOY = as.numeric(str_sub(DateDay, 5,7))
-    Hour = df.Anc[,10]
-    Anc.Time = as.POSIXct(paste(Year,DOY,Hour),
-                          format="%Y %j %H:%M:%S",tz="GMT")
+      DateDay = df.Anc[,9]
+      Year = as.numeric(str_sub(DateDay, 1,4))
+      DOY = as.numeric(str_sub(DateDay, 5,7))
+      Hour = df.Anc[,10]
+      Anc.Time = as.POSIXct(paste(Year,DOY,Hour),
+                            format="%Y %j %H:%M:%S",tz="GMT")
+    } else {
+      print("No THS to read")
+    }
+
 
 
 
@@ -377,20 +404,26 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
 
     }
 
-    # Read Ancillary
-    df.Anc = read.table(fn, skip = nHeaderLines+nDarkLinesEd+nDarkLinesLi+nDarkLinesLt
-                       +nEdLines+nLiLines+nLtLines+4,
-                       nrows = (nAncLines), header=F)
+    if (SATTHS) {
+      # Read Ancillary
+      df.Anc = read.table(fn, skip = nHeaderLines+nDarkLinesEd+nDarkLinesLi+nDarkLinesLt
+                          +nEdLines+nLiLines+nLtLines+4,
+                          nrows = (nAncLines), header=F)
 
-    names(df.Anc) = c("FRAME" , "TIMER" ,"ROLL", "PITCH",     "MAG",
-                      "COMP" , "DATETAG",   "TIME" ,"COUNTS")
+      names(df.Anc) = c("FRAME" , "TIMER" ,"ROLL", "PITCH",     "MAG",
+                        "COMP" , "DATETAG",   "TIME" ,"COUNTS")
 
-    DateDay = df.Anc[,7]
-    Year = as.numeric(str_sub(DateDay, 1,4))
-    DOY = as.numeric(str_sub(DateDay, 5,7))
-    Hour = df.Anc[,8]
-    Anc.Time = as.POSIXct(paste(Year,DOY,Hour),
-                          format="%Y %j %H:%M:%S",tz="GMT")
+      DateDay = df.Anc[,7]
+      Year = as.numeric(str_sub(DateDay, 1,4))
+      DOY = as.numeric(str_sub(DateDay, 5,7))
+      Hour = df.Anc[,8]
+      Anc.Time = as.POSIXct(paste(Year,DOY,Hour),
+                            format="%Y %j %H:%M:%S",tz="GMT")
+    } else {
+      if (VERBOSE) print("No THS to read")
+    }
+
+
 
 
   }
@@ -452,12 +485,12 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
 
   # Derive data from above information
   # sun-zenith angle
-  day <- as.numeric(format(dte, format = "%d"))
-  month <- as.numeric(format(dte, format = "%m"))
-  year <- as.numeric(format(dte, format = "%Y"))
-  hour <- as.numeric(format(dte, format = "%H"))
-  minute <- as.numeric(format(dte, format = "%M"))
-  second <- as.numeric(format(dte, format = "%S"))
+  day <- day(dte)
+  month <- month(dte)
+  year <- year(dte)
+  hour <- hour(dte)
+  minute <- minute(dte)
+  second <- second(dte)
   ah <- hour + minute / 60 + second / 3600
 
   sunpos <- possol(month, day, ah, lon, lat)
@@ -467,14 +500,26 @@ read.hocr.L2.SAS <- function(fn, VERBOSE=TRUE, APPLY.DARK=TRUE){
   dd = list(longitude=lon, latitude=lat, sunzen = sunzen, sunazim=sunazim, date=dte)
 
 
-  SAS = list(Header=Header, Ed.wl=Ed.wl, Li.wl = Li.wl, Lt.wl = Lt.wl,
-             Ed=Ed, Li=Li, Lt=Lt,
-             Ed.Darks=Ed.Darks, Li.Darks=Li.Darks, Lt.Darks=Lt.Darks,
-             Ed.Dark.mean=mean.Ed.Dark, Li.Dark.mean=mean.Li.Dark, Lt.Dark.mean=mean.Lt.Dark,
-             Ed.Time =Ed.Time, Li.Time =Li.Time, Lt.Time = Lt.Time, Anc.Time = Anc.Time,
-             Ed.Darks.Time = Ed.Darks.Time, Li.Darks.Time = Li.Darks.Time, Lt.Darks.Time = Lt.Darks.Time,
-             Anc = df.Anc,
-             dd=dd)
+  if (SATTHS) {
+    SAS = list(Header=Header, Ed.wl=Ed.wl, Li.wl = Li.wl, Lt.wl = Lt.wl,
+               Ed=Ed, Li=Li, Lt=Lt,
+               Ed.Darks=Ed.Darks, Li.Darks=Li.Darks, Lt.Darks=Lt.Darks,
+               Ed.Dark.mean=mean.Ed.Dark, Li.Dark.mean=mean.Li.Dark, Lt.Dark.mean=mean.Lt.Dark,
+               Ed.Time =Ed.Time, Li.Time =Li.Time, Lt.Time = Lt.Time, Anc.Time = Anc.Time,
+               Ed.Darks.Time = Ed.Darks.Time, Li.Darks.Time = Li.Darks.Time, Lt.Darks.Time = Lt.Darks.Time,
+               Anc = df.Anc,
+               dd=dd)
+  } else {
+    SAS = list(Header=Header, Ed.wl=Ed.wl, Li.wl = Li.wl, Lt.wl = Lt.wl,
+               Ed=Ed, Li=Li, Lt=Lt,
+               Ed.Darks=Ed.Darks, Li.Darks=Li.Darks, Lt.Darks=Lt.Darks,
+               Ed.Dark.mean=mean.Ed.Dark, Li.Dark.mean=mean.Li.Dark, Lt.Dark.mean=mean.Lt.Dark,
+               Ed.Time =Ed.Time, Li.Time =Li.Time, Lt.Time = Lt.Time, Anc.Time = NA,
+               Ed.Darks.Time = Ed.Darks.Time, Li.Darks.Time = Li.Darks.Time, Lt.Darks.Time = Lt.Darks.Time,
+               Anc = NA,
+               dd=dd)
+  }
+
 
   return(SAS)
 

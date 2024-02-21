@@ -149,7 +149,7 @@ process.HyperSAS<- function(dirdat,
       }
 
       RRS = list()
-      all.rrs = matrix(NA, nrow=length(filen), ncol=85)
+      all.rrs = matrix(NA, nrow=length(filen), ncol=93)
 
       for (i in 1:nb.rec) {
         print(paste("Process data collected at:", SAS[[i]]$dd$date))
@@ -162,6 +162,8 @@ process.HyperSAS<- function(dirdat,
                       Dphi=cast.info$Dphi[i],
                       Good=cast.info$good[i],
                       use.COMPASS)
+
+        plot.SAS.Rrs(tmp, PNG=TRUE)
         RRS[[i]] <- tmp
         all.rrs[i,] <- tmp$Rrs
       }
@@ -177,7 +179,7 @@ process.HyperSAS<- function(dirdat,
 
     } else {
       SAS = read.hocr.L2.SAS(filen, VERBOSE=FALSE)
-      save(file = paste(dirdat, "SAS.raw.RData", sep=""), SAS)
+      save(file = paste(dirdat, "SAS.raw.RData", sep="/"), SAS)
 
       RRS = compute.Rrs.SAS(SAS, tilt.max= cast.info$tilt.max,
                             quantile.prob=cast.info$quantile.prob,
@@ -188,8 +190,9 @@ process.HyperSAS<- function(dirdat,
                             Good=cast.info$good[i],
                             use.COMPASS)
       RRS$Rrs.mean = RRS$Rrs
-      RRS$Rrs.sd =   rep(NA,85)
+      RRS$Rrs.sd =   rep(NA,length(RRS$Rrs.mean))
       RRS$Rrs.wl =   RRS$Rrs.wl
+      plot.SAS.Rrs(RRS, PNG=TRUE)
     }
   }
 
@@ -248,7 +251,7 @@ process.HyperSAS<- function(dirdat,
 
   }
 
-  save(file = paste(dirdat,"RRS.RData", sep=""), RRS)
+  save(file = paste(dirdat,"RRS.RData", sep="/"), RRS)
 
   return(RRS)
 
