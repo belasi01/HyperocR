@@ -27,28 +27,89 @@ plot.SAS.Rrs <- function (SAS, PNG=FALSE, RADIANCES=FALSE) {
              width = 5, height = 4)
 
   } else {
-      Df = as.data.frame(cbind(wavelength=SAS$Rrs.wl[ix.wl],
-                               None=SAS$Rrs[ix.wl],
-                               Null_900=SAS$Rrs.NULL[ix.wl],
-                               Similarity_720_780=SAS$Rrs.SIMILARITY[ix.wl],
-                               NIR = SAS$Rrs.NIR[ix.wl],
-                               UV = SAS$Rrs.UV[ix.wl],
-                               UV.NIR = SAS$Rrs.UV.NIR[ix.wl],
-                               Kutser13 = SAS$Rrs.Kutser[ix.wl]))
+      rrs.df <- as.data.frame(t(SAS$Rrs[,ix.wl]))
+      names(rrs.df) <- SAS$methods
+      Df = as.data.frame(cbind(wavelength=SAS$Rrs.wl[ix.wl],rrs.df))
 
     Dfm = melt(Df, id.vars = c("wavelength"))
-    names(Dfm) = c("wavelength", "rho_w", "value" )
+    names(Dfm) = c("wavelength", "Methods", "value" )
 
-      p1 <- ggplot(data=Dfm, aes(x=wavelength, y=value, colour=rho_w)) + geom_line()
-      p1 <- p1 + scale_x_continuous(limits = c(350, 800))
-      p1 <- p1 + labs(x=expression(lambda), y=expression(paste(rho[w])), colour="Correction method")
-      p1 <- p1 + ggtitle(paste(SAS$anc$StationID, SAS$DateTime, "Lat:", signif(SAS$dd$lat,5), "Lon:", signif(SAS$dd$lon,5)),
+
+    # Define meaningful colors for the points and match them to the levels of the Methods variable
+    method_colors <- c("grey", "black", "orange", "darkred", "violet", "green", "yellow")
+    names(method_colors) <- unique(SAS$methods)
+
+      plot.rrs <- ggplot(data=Dfm, aes(x=wavelength, y=value, colour=Methods)) +
+        geom_line() + scale_x_continuous(limits = c(350, 800)) +
+        labs(x=expression(lambda), y=expression(paste(rho[w])), colour="Methods") +
+        scale_color_manual(name = "Methods",
+                          values = method_colors,
+                          labels = unique(rrs.df$Methods)) +
+        ggtitle(paste( "Lat:", signif(SAS$dd$lat,5), "Lon:", signif(SAS$dd$lon,6)),
                          subtitle = bquote(rho[Fresnel]^Mobley2015 == .(signif(SAS$rho.sky,3)) ~
                                              "   "~ rho[Fresnel]^NIR == .(signif(SAS$rho.sky.NIR, 3))~
                                              "   "~ rho[Fresnel]^UV == .(signif(SAS$rho.sky.UV, 3))))
-      print(p1)
+      #print(p1)
+
+      ##### generate the QWIP plot
+      # QWIP coefficients
+      p1 <- -8.399885e-9
+      p2 <- 1.715532e-5
+      p3 <- -1.301670e-2
+      p4 <- 4.357838e0
+      p5 <- -5.449532e2
+
+      predicted.AVW <- 440:600
+      predicted.NDI <- p1*(predicted.AVW^4) +
+        p2*(predicted.AVW^3) +
+        p3*(predicted.AVW^2) +
+        p4*predicted.AVW   + p5
+
+      # My line data frame
+      df <- data.frame(AVW = predicted.AVW,
+                       NDI = predicted.NDI,
+                       NDI.minus.0.1 = predicted.NDI-0.1,
+                       NDI.plus.0.1 = predicted.NDI+0.1,
+                       NDI.minus.0.2 = predicted.NDI-0.2,
+                       NDI.plus.0.2 = predicted.NDI+0.2)
+
+      # Reshaping
+      dfm <- melt(df,id.vars = "AVW")
+      names(dfm) <- c("AVW", "Predicted", "NDI")
+
+
+      # my point data frame
+      df.qwip <- data.frame(AVW = SAS$AVW,
+                           NDI = SAS$NDI,
+                           Methods = SAS$methods,
+                           FU = SAS$FU)
+
+
+
+      # Plotting
+      plot.QWIP <- ggplot() +
+        geom_line(data = dfm, aes(x = AVW, y = NDI, color = Predicted, linetype = Predicted)) +
+        geom_point(data = df.qwip, aes(x = AVW, y = NDI, fill = Methods), shape = 21, size = 3, color = "black") +
+        geom_text(data = df.qwip, aes(x = AVW, y = NDI, label = FU), vjust = -0.5) + # Add labels
+        scale_color_manual(name = "Lines",
+                           labels = c("Predicted", "-0.1", "+0.1", "-0.2", "+0.2"),
+                           values = c("black", "orange", "orange", "red", "red")) +
+        scale_fill_manual(name = "Methods",
+                          values = method_colors,
+                          labels = unique(df.qwip$Methods)) +
+        scale_linetype_manual(name = "Lines",
+                              labels = c("Predicted", "-0.1", "+0.1", "-0.2", "+0.2"),
+                              values = c("solid", "dashed", "dashed", "dotted", "dotted"))
+
+      fullplot <- plot.rrs / plot.QWIP +
+        plot_annotation(title = SAS$DateTime,
+                        theme = theme(plot.title = element_text(hjust = 0.5))) +
+        plot_layout(guides = "collect")
+      suppressMessages(plot(fullplot))
+
+
       if (PNG) ggsave(paste("PNG/Rrs_",SAS$DateTime,".png",sep=""), units = "in",
-                      width = 5, height = 4)
+                      width = 8, height = 7)
 
   }
 }

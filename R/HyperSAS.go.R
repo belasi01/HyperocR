@@ -32,23 +32,23 @@
 #'@details First when HyperSAS.go is executed, it reads a file named directories.for.HyperSAS.dat
 #'in the working directory from which \code{\link{HyperSAS.go}} was launched.
 #'
-#'Second, in each folder found in directories.for.HyperSAS.dat, the programm will look for a
+#'Second, in each folder found in directories.for.HyperSAS.dat, the program will look for a
 #'file named cast.info.dat. This file contains the logging information need to process each *L2.dat
 #'The cast.info.dat file contains the information on viewing geometry, windspeed,
 #'dark current file, as well as processing parameters such as the quantile probility,
 #'the maximum tilt tolerance, the "white correction method" to eliminate sun glint, foam,
 #'ocean spray etc. In details, the following 11 fields should be found in cast.info.dat:
-#'Year,
-#'Day,
-#'Time,
-#'Dphi,
-#'ThetaV,
-#'Windspeed,
-#'Wind.units,
-#'quantile.prob,
+#'Year (YYYY),
+#'Day (JDAY),
+#'Time (HHMMSS),
+#'Dphi (DEGREE),
+#'ThetaV (DEGREE),
+#'Windspeed (d.d),
+#'Wind.units ("m.s", "Kts", "Km.h" or "Km/h")),
+#'quantile.prob (0.5 to 1),
 #'tilt.max,
-#'NIR.CORRECTION,
-#'good.
+#'NIR.CORRECTION ("Mobley+NONE", "Mobley+NULL", 'Mobley+SIMILARITY1', "NIR", "UV", "UV+NIR" or "Kutser"),
+#'good (0 or 1).
 #'
 #'Finally, the function \code{\link{process.HyperSAS}} will be called to process each data folder.
 #'
