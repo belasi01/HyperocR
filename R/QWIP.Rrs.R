@@ -10,8 +10,7 @@
 #'
 #' @author Simon Bélanger
 #' @export
-
-
+#' @name QWIP.Rrs
 QWIP.Rrs <- function(Waves, Rrs) {
 
 
