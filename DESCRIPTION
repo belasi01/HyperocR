@@ -1,8 +1,8 @@
 Package: HyperocR
 Type: Package
 Title: Hyperspectral OCR data processing
-Version: 0.6-3
-Date: 2024-02-27
+Version: 0.6-4
+Date: 2024-02-28
 Author: Simon Belanger
 Maintainer: Simon Belanger, <simon_belanger@uqar.ca>
 Description: R routines to read and process Hyperspectral data from Satlantic
@@ -24,5 +24,6 @@ Depends:
     grid,
     Riops,
     data.table,
-    lubridate
+    lubridate,
+    viridis
 RoxygenNote: 7.1.2

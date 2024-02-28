@@ -6,6 +6,7 @@
 #'
 #'
 #'@param SAS is a list return by \code{\link{read.horc.L2.SAS}}.
+#'@param ID is the station ID
 #'@param tilt.max is the maximum tilt tolerance for the SAS.
 #'A default value is 3 degrees is used otherwise.
 #'@param quantile.prob is a value (betwwen 0.25 to 1) for the maximum quantile probability
@@ -81,6 +82,7 @@
 #'@export
 #'@name compute.Rrs.SAS
 compute.Rrs.SAS <- function(SAS,
+                            ID = "Station",
                             tilt.max= 3,
                             quantile.prob = 0.5,
                             windspeed = 5,
@@ -368,15 +370,11 @@ compute.Rrs.SAS <- function(SAS,
 
 
   return(list(
+    ID = ID,
     Rrs.wl = waves,
     methods = methods,
     Rrs = Rrs,
-    #Rrs.NULL = Rrs.NULL,
-    #Rrs.SIMILARITY1 = Rrs.SIMILARITY,
-    #Rrs.NIR = Rrs.BP,
-    #Rrs.UV = Rrs.UV,
-    #Rrs.UV.NIR = Rrs.UV.NIR,
-    #Rrs.Kutser = Rrs.Kutser,
+    rhow = pi*Rrs,
     rho.sky = rho,
     rho.sky.NIR = rho.sky.NIR,
     rho.sky.UV = rho.sky.UV,

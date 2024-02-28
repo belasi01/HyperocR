@@ -6,6 +6,8 @@
 \arguments{
 \item{SAS}{is a list return by \code{\link{read.horc.L2.SAS}}.}
 
+\item{ID}{is the station ID}
+
 \item{tilt.max}{is the maximum tilt tolerance for the SAS.
 A default value is 3 degrees is used otherwise.}
 

@@ -76,6 +76,12 @@ process.HyperSAS<- function(dirdat,
     print("Time (HHMMSS) not found in cast.info.dat")
     stop()
   }
+  if (is.null(cast.info$ID)) {
+    print("Year not found in cast.info.dat")
+    print("extract the ID from the folder name")
+    ID <- str_extract(dirdat, "(?<=Station)[^/]+")
+    cast.info$ID = rep(ID,nreplicates)
+  }
   if (is.null(cast.info$Dphi)) {
     print("Dphi (delta azimuth betwen sun and sensor viewing aximuth) not found in cast.info.dat")
     print("Mandatory if USE.COMPASS=FALSE")
@@ -99,10 +105,14 @@ process.HyperSAS<- function(dirdat,
           if (cast.info$Wind.units[i] == "Kts") {
             print("Convert wind speed from Knots to m/s" )
             cast.info$Windspeed[i] = cast.info$Windspeed[i]/1.9426
+            # Update units in cast.info for the next run
+            cast.info$Wind.units = rep("m.s",nreplicates)
           }
           if (cast.info$Wind.units[i] == "Km.h" | cast.info$Wind.units[i] == "Km/h") {
             print("Convert wind speed from Km/h to m/s" )
             cast.info$Windspeed[i] = cast.info$Windspeed[i]/3.6
+            # Update units in cast.info for the next run
+            cast.info$Wind.units = rep("m.s",nreplicates)
           }
         }
     }
@@ -120,8 +130,8 @@ process.HyperSAS<- function(dirdat,
   }
   if (is.null(cast.info$NIR.CORRECTION)) {
     print("NIR.CORRECTION method not found in cast.info.dat")
-    print("Assumes NULL")
-  cast.info$NIR.CORRECTION = rep("NULL",nreplicates)
+    print("Assumes Mobley+NONE")
+  cast.info$NIR.CORRECTION = rep("Mobley+NONE",nreplicates)
   }
 
   if (is.null(cast.info$good)) {
@@ -129,6 +139,9 @@ process.HyperSAS<- function(dirdat,
     print("Assumes that all replicates are good (i.e. =1)")
     cast.info$good = rep(1,nreplicates)
   }
+
+  # Update cast.info.dat file
+  write.table(cast.info, cast.info.file, quote = F, sep=" ")
 
   if (TYPE == "STATION") {
 
@@ -157,10 +170,18 @@ process.HyperSAS<- function(dirdat,
       QWIP.score.selected <- rep(NA,nb.rec)
       FU.selected <- rep(NA,nb.rec)
       cast.datetime<-rep(NA,nb.rec)
+      sunzen<-rep(NA,nb.rec)
+      viewzen<-rep(NA,nb.rec)
+      dphi<-rep(NA,nb.rec)
+      lat<-rep(NA,nb.rec)
+      lon<-rep(NA,nb.rec)
+      windspeed<-rep(NA,nb.rec)
+      ID <- rep(NA,nb.rec)
 
       for (i in 1:nb.rec) {
         print(paste("Process data collected at:", SAS[[i]]$dd$date))
         tmp = compute.Rrs.SAS(SAS[[i]],
+                      ID = cast.info$ID[i],
                       tilt.max= cast.info$tilt.max[i],
                       quantile.prob=cast.info$quantile.prob[i],
                       windspeed=cast.info$Windspeed[i],
@@ -181,6 +202,14 @@ process.HyperSAS<- function(dirdat,
         QWIP.score.selected[i]<- tmp$QWIP.score[ix.method]
         FU.selected[i]        <- tmp$FU[ix.method]
         cast.datetime[i]      <- RRS[[i]]$dd$date
+        sunzen[i]             <- RRS[[i]]$ThetaS
+        viewzen[i]            <- RRS[[i]]$ThetaV
+        dphi[i]               <- RRS[[i]]$Dphi.log
+        lat[i]                <- RRS[[i]]$dd$latitude
+        lon[i]                <- RRS[[i]]$dd$longitude
+        windspeed[i]          <- RRS[[i]]$Windspeed
+        ID[i]                 <- RRS[[i]]$ID
+
       }
 
   # Average the good RRS
@@ -192,7 +221,14 @@ process.HyperSAS<- function(dirdat,
       RRS$Rrs.wl =tmp$Rrs.wl
       RRS$QWIP <- QWIP.Rrs(tmp$Rrs.wl, Rrs.mean)
       RRS$FU   <- Rrs2FU(tmp$Rrs.wl, Rrs.mean)$FU
-
+      RRS$DateTime <- as_datetime(mean(cast.datetime[ix.good]), origin = "1970-01-01")
+      RRS$sunzen            <- mean(sunzen[ix.good])
+      RRS$viewzen           <- mean(viewzen[ix.good])
+      RRS$dphi              <- mean(dphi[ix.good])
+      RRS$lat               <- mean(lat[ix.good])
+      RRS$lon               <- mean(lon[ix.good])
+      RRS$windspeed         <- mean(windspeed[ix.good])
+      RRS$ID                <- unique(ID)
 
     # Plot selected Rrs
       rrs.df <- as.data.frame(t(all.rrs))
@@ -306,6 +342,14 @@ process.HyperSAS<- function(dirdat,
       RRS$Rrs.mean = RRS$Rrs
       RRS$Rrs.sd =   rep(NA,length(RRS$Rrs.mean))
       RRS$Rrs.wl =   RRS$Rrs.wl
+      RRS$DateTime          <- RRS$dd$date
+      RRS$sunzen            <- RRS$ThetaS
+      RRS$viewzen           <- RRS$ThetaV
+      RRS$dphi              <- RRS$Dphi.log
+      RRS$lat               <- RRS$dd$latitude
+      RRS$lon               <- RRS$dd$longitude
+      RRS$windspeed         <- RRS$Windspeed
+      RRS$ID                <- RRS$ID
       plot.SAS.Rrs(RRS, PNG=TRUE)
     }
   }

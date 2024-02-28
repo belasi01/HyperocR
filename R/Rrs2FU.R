@@ -27,32 +27,37 @@ Rrs2FU <-function(Waves, Rrs){
 
   sum = X+Y+Z
 
-  x = X / sum
-  y = Y / sum
+  if (sum == 0) {
+    print("WARNING: Invalid Rrs for FU calculation!!")
+    return(list(x=NA, y=NA, FU=NA))
+  } else {
+    x = X / sum
+    y = Y / sum
 
-  # compute the angle in the chromaticity space
+    # compute the angle in the chromaticity space
 
-  dx = x - 0.33
-  dy = y - 0.33
+    dx = x - 0.33
+    dy = y - 0.33
 
-  alpha.rad = atan(dy/dx)
+    alpha.rad = atan(dy/dx)
 
-  if (dx >= 0) {
-    alpha.M = alpha.rad*180/pi
-  } else alpha.M = 180 + alpha.rad*180/pi
+    if (dx >= 0) {
+      alpha.M = alpha.rad*180/pi
+    } else alpha.M = 180 + alpha.rad*180/pi
 
-  # Get the FU class
+    # Get the FU class
 
-  if (alpha.M > alpha.T[1]) FU = 1
-  if (alpha.M < alpha.T[20]) FU = 21
+    if (alpha.M > alpha.T[1]) FU = 1
+    if (alpha.M < alpha.T[20]) FU = 21
 
-  for (i in 1:19) {
-    if (alpha.M <= alpha.T[i] & alpha.M > alpha.T[i+1]) FU = i+1
+    for (i in 1:19) {
+      if (alpha.M <= alpha.T[i] & alpha.M > alpha.T[i+1]) FU = i+1
+    }
+
+    return(list(x=x, y=y, FU=FU))
   }
 
 
-
-  return(list(x=x, y=y, FU=FU))
 }
 
 
