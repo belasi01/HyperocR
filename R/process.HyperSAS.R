@@ -106,13 +106,13 @@ process.HyperSAS<- function(dirdat,
             print("Convert wind speed from Knots to m/s" )
             cast.info$Windspeed[i] = cast.info$Windspeed[i]/1.9426
             # Update units in cast.info for the next run
-            cast.info$Wind.units = rep("m.s",nreplicates)
+            cast.info$Wind.units[i] = "m.s"
           }
           if (cast.info$Wind.units[i] == "Km.h" | cast.info$Wind.units[i] == "Km/h") {
             print("Convert wind speed from Km/h to m/s" )
             cast.info$Windspeed[i] = cast.info$Windspeed[i]/3.6
             # Update units in cast.info for the next run
-            cast.info$Wind.units = rep("m.s",nreplicates)
+            cast.info$Wind.units[i] = "m.s"
           }
         }
     }
@@ -141,7 +141,7 @@ process.HyperSAS<- function(dirdat,
   }
 
   # Update cast.info.dat file
-  write.table(cast.info, cast.info.file, quote = F, sep=" ")
+  write.table(cast.info, cast.info.file, quote = F, sep=" ", row.names = F)
 
   if (TYPE == "STATION") {
 
@@ -149,8 +149,8 @@ process.HyperSAS<- function(dirdat,
     filen = paste(cast.info$Year,"-", cast.info$Day,"-", cast.info$Time, "_L2.dat", sep="")
     nb.rec = length(filen)
 
-    if (nb.rec > 2) {
-      print("More than two Ed0+ file")
+    if (nb.rec > 1) {
+      print("More than one Ed0+ file")
 
       if (use.SAS.RData) {
         print(paste("Load: ",dirdat, "/SAS.raw.RData", sep="" ))
