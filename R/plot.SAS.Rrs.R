@@ -36,7 +36,7 @@ plot.SAS.Rrs <- function (SAS, PNG=FALSE, RADIANCES=FALSE) {
 
 
     # Define meaningful colors for the points and match them to the levels of the Methods variable
-    method_colors <- c("grey", "black", "orange", "darkred", "violet", "green", "yellow")
+    method_colors <- c("grey", "black", "orange", "darkred", "violet", "green", "yellow", "blue")
     names(method_colors) <- unique(SAS$methods)
 
       plot.rrs <- ggplot(data=Dfm, aes(x=wavelength, y=value, colour=Methods)) +

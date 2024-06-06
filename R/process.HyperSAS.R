@@ -20,6 +20,9 @@
 #'When FALSE, the azimuth angle difference is taken
 #'from the cast.info.dat file. NOTE: The Default is FALSE because
 #'compass usually doesn't work on ship.
+#'@param COPS is logical parameter to force the water reflectance to pass through the COPS
+#' reflectance measurements made a priori. It must be turn on only if COPS data have been
+#' processed and validated
 #'
 #'@return The function returns a list containing the Rrs data.
 #'The same list (RRS) is saved into a RRS.RData file in dirdat.
@@ -42,7 +45,8 @@
 process.HyperSAS<- function(dirdat,
                             TYPE="STATION",
                             use.SAS.RData=FALSE,
-                            use.COMPASS=FALSE) {
+                            use.COMPASS=FALSE,
+                            COPS=FALSE) {
 
   # Cast info file
   default.cast.info.file <- paste( Sys.getenv("R_HOCR_DATA_DIR"), "cast.info.dat", sep = "/")
@@ -189,7 +193,8 @@ process.HyperSAS<- function(dirdat,
                       thetaV=cast.info$ThetaV[i],
                       Dphi=cast.info$Dphi[i],
                       Good=cast.info$good[i],
-                      use.COMPASS)
+                      use.COMPASS,
+                      COPS)
 
         plot.SAS.Rrs(tmp, PNG=TRUE)
         RRS[[i]] <- tmp # store the list in a list of list
@@ -331,17 +336,24 @@ process.HyperSAS<- function(dirdat,
       SAS = read.hocr.L2.SAS(filen, VERBOSE=FALSE)
       save(file = paste(dirdat, "SAS.raw.RData", sep="/"), SAS)
 
-      RRS = compute.Rrs.SAS(SAS, tilt.max= cast.info$tilt.max,
+      RRS = compute.Rrs.SAS(SAS,
+                            ID = cast.info$ID,
+                            tilt.max= cast.info$tilt.max,
                             quantile.prob=cast.info$quantile.prob,
                             windspeed=cast.info$Windspeed,
                             NIR.CORRECTION=cast.info$NIR.CORRECTION,
                             thetaV=cast.info$ThetaV,
                             Dphi=cast.info$Dphi,
-                            Good=cast.info$good[i],
-                            use.COMPASS)
-      RRS$Rrs.mean = RRS$Rrs
+                            Good=cast.info$good,
+                            use.COMPASS,
+                            COPS)
+
+      ix.method <- which(RRS$methods == cast.info$NIR.CORRECTION)
+      RRS$Rrs.mean = RRS$Rrs[ix.method,]
       RRS$Rrs.sd =   rep(NA,length(RRS$Rrs.mean))
       RRS$Rrs.wl =   RRS$Rrs.wl
+      #RRS$QWIP <-    RRS$QWIP[ix.method]
+      #RRS$FU   <-    RRS$FU[ix.method]
       RRS$DateTime          <- RRS$dd$date
       RRS$sunzen            <- RRS$ThetaS
       RRS$viewzen           <- RRS$ThetaV
@@ -387,7 +399,8 @@ process.HyperSAS<- function(dirdat,
                               thetaV=cast.info$ThetaV[i],
                               Dphi=cast.info$Dphi[i],
                               Good=cast.info$good[i],
-                              use.COMPASS)
+                              use.COMPASS,
+                              COPS)
         RRS[[i]] <- tmp
         all.rrs[i,] <- tmp$Rrs
         all.lat.lon[i,] <- c(SAS[[i]]$dd$latitude, SAS[[i]]$dd$longitude)

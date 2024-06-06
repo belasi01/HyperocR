@@ -36,6 +36,9 @@
 #'When FALSE, the azimuth angle difference is taken
 #'from the cast.info.dat file. NOTE: The Default is FALSE because
 #'compass usually doesn't work on ship.
+#'@param COPS is logical parameter to force the water reflectance to pass through the COPS
+#' reflectance measurements made a priori. It must be turn on only if COPS data have been
+#' processed and validated
 #'
 #'@details
 #'This functions is the main part of the HyperSAS data processing.
@@ -90,7 +93,10 @@ compute.Rrs.SAS <- function(SAS,
                             Dphi=90,
                             NIR.CORRECTION="NULL",
                             Good=1,
-                            use.COMPASS=FALSE) {
+                            use.COMPASS=FALSE,
+                            COPS=FALSE) {
+
+  SAS.path <- getwd()
 
   #### Compute Tilt from Roll and Pitch for each sensor
   d2r <- pi / 180
@@ -253,15 +259,15 @@ compute.Rrs.SAS <- function(SAS,
 
   ###################
   #### Compute Rrs by removing sky reflectance to total reflectance.
-  #### 7 methods are implemented
-  methods=c("Mobley+NONE", "Mobley+NULL", 'Mobley+SIMILARITY1', "NIR", "UV", "UV+NIR", "Kutser")
-  Rrs <- matrix(NA, nrow=7, ncol=93)
+  #### 8 methods are implemented
+  methods=c("Mobley+NONE", "Mobley+NULL", 'Mobley+SIMILARITY1', "NIR", "UV", "UV+NIR", "Kutser", "COPS")
+  Rrs <- matrix(NA, nrow=8, ncol=93)
   ##### store the QWIP parameters computed using QWIP.Rrs.R
-  AVW <- rep(NA,7)
-  NDI <- rep(NA,7)
-  QWIP <- rep(NA,7)
-  QWIP.score <- rep(NA,7)
-  FU <- rep(NA,7)
+  AVW <- rep(NA,8)
+  NDI <- rep(NA,8)
+  QWIP <- rep(NA,8)
+  QWIP.score <- rep(NA,8)
+  FU <- rep(NA,8)
 
   ##### Method 1. Mobley LUT standard method with no white correction ("NONE")
   i=1
@@ -367,6 +373,143 @@ compute.Rrs.SAS <- function(SAS,
   QWIP[i] <-tmp$QWIP
   QWIP.score[i] <- tmp$QWIP.score
   FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
+
+  #####
+  ##### Method 8. (OPTIONAL). Only if COPS is available
+  # this method forces the HyperSAS-derived Rrs to pass through
+  # the cops Rrs at two wavelenghts (second shortest and longest respectively)
+  i=8
+  if (COPS) {
+
+    # Finding the COPS files avaiblable
+    # Check for COPS folder in the parent directory
+    ld = list.dirs("..", recursive = F)
+    ix.d = grep("COPS", ld)
+    if (length(ix.d) >= 1) {
+      if (length(ix.d) > 1) {
+        print("More than one COPS folder found")
+        cops.path = ld[ix.d[1]]
+      } else {
+        cops.path = ld[ix.d]
+      }
+
+      setwd(cops.path)
+
+      remove.file <- "remove.cops.dat"
+      select.file <- "select.cops.dat"
+
+      select.file.exists <- FALSE
+
+      if (file.exists(remove.file)) {
+        remove.tab <- read.table(remove.file, header = FALSE, colClasses = "character", sep = ";")
+        kept.cast <- remove.tab[[2]] == "1"
+      }
+      if (file.exists(select.file)) {
+        select.file.exists <- TRUE
+        remove.tab <- read.table(select.file, header = FALSE, colClasses = "character", sep = ";")
+        kept.cast <- remove.tab[[2]] == "1"
+        Rrs_method <- remove.tab[kept.cast, 3]
+      }
+      listfile  <- remove.tab[kept.cast, 1]
+
+
+      setwd("./BIN/")
+
+      nf = length(listfile)
+      print(listfile)
+
+      if (nf > 1) {
+
+        mRrs = matrix(ncol=19, nrow = nf)
+
+        for (j in 1:nf) {
+
+          load(paste(listfile[j], ".RData", sep=""))
+          waves.COPS = cops$LuZ.waves
+
+          # extract Rrs
+          if (select.file.exists) {
+            mRrs[j,] = eval(parse(text=paste0("cops$",Rrs_method[j])))
+
+          } else {
+            mRrs[j,] = cops$Rrs.0p.linear
+          }
+
+
+        }
+
+        cops.Rrs.m = apply(mRrs, 2, mean, na.rm=T)
+      } else {
+        load(paste(listfile, ".RData", sep=""))
+        waves.COPS = cops$LuZ.waves
+        if (select.file.exists) {
+          cops.Rrs.m = eval(parse(text=paste0("cops$",Rrs_method)))
+
+        } else {
+          cops.Rrs.m = cops$Rrs.0p.linear
+        }
+      }
+
+      # Find the shortest and longest valid wavelength for the Rrs matching between SAS and COPS
+      #ix.good.Rrs = which(cops.Rrs.m > 0)
+      #ix.waves.min.cops = min(ix.good.Rrs)
+      #ix.waves.max.cops = max(ix.good.Rrs)
+      #waves.max = waves.COPS[ix.waves.max.cops]
+      #waves.min = waves.COPS[ix.waves.min.cops]
+      #ix.waves.min.SAS = which.min(abs(waves - waves.min))
+      #if (ix.waves.min.SAS<6) ix.waves.min.SAS=6. ### Pas certain de comprendre cette condition... probablement pertinente pour l'ASD
+      #ix.waves.max.SAS = which.min(abs(waves - waves.max))
+
+      #### New code for matching HyperSAS with COPS
+      #### remove COPS wavelength outside HyperSAS range
+      ix.cops.shorter <- which(waves.COPS < waves[1])
+      ix.cops.longer <- which(waves.COPS > waves[length(waves)])
+      ix.remove  <- c(ix.cops.shorter,ix.cops.longer)
+      cops.Rrs.m <- cops.Rrs.m[-ix.remove]
+      waves.COPS <- waves.COPS[-ix.remove]
+      #### remove NA values
+      ix.remove <-  which(is.na(cops.Rrs.m))
+      if (length(ix.remove)>0) cops.Rrs.m <- cops.Rrs.m[-ix.remove]
+      if (length(ix.remove)>0) waves.COPS <- waves.COPS[-ix.remove]
+      #### Select the shortest and longest wavelengths
+      waves.min <- waves.COPS[1]
+      waves.max <- waves.COPS[length(waves.COPS)]
+      #### Find the index of the SAS wavelength
+      ix.waves.min.SAS = which.min(abs(waves - waves.min))
+      ix.waves.max.SAS = which.min(abs(waves - waves.max))
+
+
+      # Estimate rho.shy at the two wavelenghts selected (take plus or minus 5 nm)
+      rho.sky.min  = ((mean(sea.smooth[(ix.waves.min.SAS-1):(ix.waves.min.SAS+1)],na.rm = T) - cops.Rrs.m[1])
+                      / mean(sky.smooth[(ix.waves.min.SAS-1):(ix.waves.min.SAS+1)], na.rm = T))
+      rho.sky.max  = ((mean(sea.smooth[(ix.waves.max.SAS-1):(ix.waves.max.SAS+1)],na.rm = T) - cops.Rrs.m[length(waves.COPS)])
+                      / mean(sky.smooth[(ix.waves.max.SAS-1):(ix.waves.max.SAS+1)], na.rm = T))
+
+      rho.sky.COPS = spline(c(waves.min, waves.max), c(rho.sky.min, rho.sky.max),
+                            xout = waves)$y
+
+      Rrs[i, ] <- sea.smooth - (rho.sky.COPS*sky.smooth)
+
+      tmp=QWIP.Rrs(waves, Rrs[i,])
+      AVW[i] <- tmp$AVW
+      NDI[i] <- tmp$NDI
+      QWIP[i] <-tmp$QWIP
+      QWIP.score[i] <- tmp$QWIP.score
+      FU[i] <- Rrs2FU(waves, Rrs[i,])$FU
+
+
+      setwd(SAS.path)
+
+    } else {
+      print("No COPS folder found!!!")
+      print("Stop processing")
+      return(0)
+    }
+  }
+
+
+
+
 
 
   return(list(

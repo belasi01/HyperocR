@@ -21,6 +21,10 @@ It is used only when TYPE="TRANSIT".
 The plots shows the temporal variability in Ed and tilt,
 as well as the spectra for each Ed, Li and Lt recorded during the data acquisition.
 Default is FALSE.}
+
+\item{COPS}{is logical parameter to force the water reflectance to pass through the COPS
+reflectance measurements made a priori. It must be turn on only if COPS data have been
+processed and validated}
 }
 \description{
 This function launches the HyperSAS data processing,
@@ -54,7 +58,7 @@ Windspeed (d.d),
 Wind.units ("m.s", "Kts", "Km.h" or "Km/h")),
 quantile.prob (0.5 to 1),
 tilt.max,
-NIR.CORRECTION ("Mobley+NONE", "Mobley+NULL", 'Mobley+SIMILARITY1', "NIR", "UV", "UV+NIR" or "Kutser"),
+NIR.CORRECTION ("Mobley+NONE", "Mobley+NULL", 'Mobley+SIMILARITY1', "NIR", "UV", "UV+NIR" or "Kutser" or "COPS"),
 good (0 or 1).
 
 Finally, the function \code{\link{process.HyperSAS}} will be called to process each data folder.

@@ -21,6 +21,10 @@ between the sun and the view geometry is calculated using the SAS compass data.
 When FALSE, the azimuth angle difference is taken
 from the cast.info.dat file. NOTE: The Default is FALSE because
 compass usually doesn't work on ship.}
+
+\item{COPS}{is logical parameter to force the water reflectance to pass through the COPS
+reflectance measurements made a priori. It must be turn on only if COPS data have been
+processed and validated}
 }
 \value{
 The function returns a list containing the Rrs data.
